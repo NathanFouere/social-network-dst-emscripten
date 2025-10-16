@@ -14,15 +14,15 @@
       ];
       perSystem = { config, self', inputs', pkgs, system, ... }: {
         devShells.default = pkgs.mkShell {
-          nativeBuildInputs = with pkgs; [
+          packages = with pkgs; [
             gcc
             emscripten
             cmake
+            thrift
+            boost
+            nodejs_22
           ];
 
-          buildInputs = with pkgs; [
-            mongoc
-          ];
 
           shellHook = ''
               # emscripten utilise du cache
