@@ -1,0 +1,36 @@
+name: Social Network Pipeline
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  check_snake:
+    name: Check build
+    runs-on: ubuntu-22.04
+    steps:
+      - name: git checkout
+        uses: actions/checkout@v3
+      - name: Install Nix
+        uses: DeterminateSystems/nix-installer-action@main
+      - uses: DeterminateSystems/magic-nix-cache-action@main
+      - name: Check Nixpkgs inputs
+        uses: DeterminateSystems/flake-checker-action@main
+        with:
+          fail-mode: true
+
+      - name: Configure Make
+        working-directory: convertedMicroServices
+        run: |
+          nix develop .. --command \
+            emcmake cmake
+      - name: Build
+        working-directory: convertedMicroServices
+        run: |
+          nix develop .. --command \
+            make
+      
