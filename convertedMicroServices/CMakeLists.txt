@@ -6,6 +6,8 @@ add_executable(
     UniqueIdHandler/UniqueIdHandler.cpp
     MediaHandler/Media.cpp
     MediaHandler/MediaHandler.cpp
+    SocialGraphHandler/SocialGraphHandler.cpp
+    UserHandler/UserHandler.cpp
 )
 
 set_target_properties(convertedMicroServices PROPERTIES
