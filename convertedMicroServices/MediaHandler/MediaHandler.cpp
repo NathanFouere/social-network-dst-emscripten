@@ -3,7 +3,6 @@
 #include <emscripten/bind.h>
 #include <stdexcept>
 #include <vector>
-#include "Media.hpp"
 
 using namespace emscripten;
 

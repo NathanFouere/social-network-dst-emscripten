@@ -36,6 +36,19 @@
         console.log(mediaList)
         console.log(mediaList.get(0).media_type)
         console.log(mediaList.get(0).media_id)
+
+
+        // Test user handler
+
+        var socialGraphHandler = new Module.SocialGraphHandler();
+        var userHandler = new Module.UserHandler(socialGraphHandler, uniqueIdHandler);
+
+        userHandler.RegisterUserWithId("fouéré", "nathan", "gourcuffdu14", "101214", 55);
+        userHandler.RegisterUser("fouéré", "nathan", "gourcuffdu14", "101214");
+        userHandler.ComposeCreatorWithUsername("gourcuffdu14");
+        userHandler.ComposeCreatorWithUserId(55, "gourcuffdu14");
+        userHandler.Login("gourcuffdu14", "101214");
+        userHandler.GetUserId("gourcuffdu14");
       }
     };
   </script>

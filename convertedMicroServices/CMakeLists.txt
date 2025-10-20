@@ -3,8 +3,9 @@ project(convertedMicroServices)
 
 add_executable(
     convertedMicroServices
+    Types/Creator/Creator.cpp
+    Types/Media/Media.cpp
     UniqueIdHandler/UniqueIdHandler.cpp
-    MediaHandler/Media.cpp
     MediaHandler/MediaHandler.cpp
     SocialGraphHandler/SocialGraphHandler.cpp
     UserHandler/UserHandler.cpp
