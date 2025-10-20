@@ -7,7 +7,7 @@ SocialGraphHandler::SocialGraphHandler() {
 
 }
 
-void SocialGraphHandler::InsertUser(int64_t req_id, int64_t user_id) {
+void SocialGraphHandler::InsertUser(int64_t user_id) {
     std::cout << "Insert User Appelé !" << std::endl;
 }
 
