@@ -18,11 +18,8 @@
             gcc
             emscripten
             cmake
-            thrift
-            boost
-            nodejs_22
+            mongoc
           ];
-
 
           shellHook = ''
               # emscripten utilise du cache

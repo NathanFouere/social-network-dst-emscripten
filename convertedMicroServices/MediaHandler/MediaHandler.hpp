@@ -5,7 +5,7 @@
 #include <map>
 #include <string>
 #include <vector>
-#include "Media.hpp"
+#include "../Types/Media/Media.hpp"
 
 class MediaHandler {
   public:

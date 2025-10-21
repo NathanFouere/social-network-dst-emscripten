@@ -30,22 +30,11 @@ static int GetCounter(int64_t timestamp) {
   }
 }
 
-struct PostType {
-  enum type {
-    POST = 0,
-    REPOST = 1,
-    REPLY = 2,
-    DM = 3
-  };
-};
-
 class UniqueIdHandler {
     public:
         UniqueIdHandler(const std::string &machine_id);
 
         int64_t ComposeUniqueId(
-            int64_t req_id,
-            PostType::type post_type
         );
 
     private:
