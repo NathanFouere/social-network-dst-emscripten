@@ -1,4 +1,4 @@
-import Module from './convertedMicroServices.js'
+import Module from './wasm/convertedMicroServices.js'
 
 var module = await Module();
 
