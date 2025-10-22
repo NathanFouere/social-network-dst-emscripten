@@ -2,6 +2,7 @@
 #include <cstdint>
 #include <cstdio>
 #include <emscripten/bind.h>
+#include <nlohmann/json.hpp>
 
 using namespace emscripten;
 
@@ -62,15 +63,19 @@ Creator UserHandler::ComposeCreatorWithUserId(
 
 // Dans le userHandler original, cherche d'abord dans le cache, puis dans mongo
 // un user avec l'username donné et vérifie le password
-std::string UserHandler::Login(
+bool UserHandler::Login(
     const std::string &username,
     const std::string &password
 ) {
     std::cout << "UserHandler donné with username: " << username << std::endl;
 
-    // TODO => renvoie un jwt
+    //
 
-    return "jwt qui marche pas";
+    if (username == "test" && password == "test") {
+        return true;
+    }
+
+    return false;
 }
 
 // Dans le UserHandler original, renvoie le user id correspondant au username

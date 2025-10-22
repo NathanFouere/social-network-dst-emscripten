@@ -14,11 +14,15 @@
       ];
       perSystem = { config, self', inputs', pkgs, system, ... }: {
         devShells.default = pkgs.mkShell {
-          packages = with pkgs; [
+          nativeBuildInputs = with pkgs; [
             gcc
             emscripten
             cmake
             mongoc
+          ];
+
+          buildInputs = with pkgs; [
+            nlohmann_json
           ];
 
           shellHook = ''

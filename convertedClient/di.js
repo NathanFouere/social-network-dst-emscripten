@@ -11,7 +11,8 @@ const di = {
   uniqueIdHandler: uniqueIdHandler,
   mediaHandler: mediaHandler,
   socialGraphHandler: socialGraphHandler,
-  userHandler: userHandler
+  userHandler: userHandler,
+  module: module,
 }
 
 export default di;
