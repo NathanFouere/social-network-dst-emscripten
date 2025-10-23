@@ -1,3 +1,7 @@
+## Compiler pour le client
+
+Il faut lancer le script build-for-client avec la commande `./build-for-client.sh`
+
 ## Emscripten
 
 Emscripten est un compilateur source à source open source permettant de compiler du bitcode LLVM en asm.js, qui peut être exécuté par les navigateurs web.
@@ -6,7 +10,7 @@ Le bytecode LLVM étant généré à partir de programmes écris en C ou C++, pa
 
 Emcc utilise Clang et LLVM pour être compilé en WebAssembly. Il crééer également du javascript qui fournit une API de support au code compilé en Web Assembly. Ce Javascript peut être exécuté par NodeJs ou depuis un fichier un html dans un navigateur.
 
-### Exemple 
+### Exemple
 
 Pour afficher hello world en C on on aura le code suivant :
 
@@ -54,11 +58,11 @@ Cmake (grâce aux CMakeList) résoud cette problématique en créant les scripts
 
 ![Compilation cmake](compilation_cmake.png)
 
-Cette fois, Cmake grâce au fichier CMakeList.txt, va produire le script de compilation permettant la création de l'exécutable. Le fichier CMakeLists.txt est indépedant de la platefroem. Il décrit comment ocmpiler le projet à l'aide d'informations comme :  le langage utilisé, les fichiers à compiler, les dépendances. Ainsi CMake va pouvoir produire le script de compilation adéquat pour votre machine et votre projet. 
+Cette fois, Cmake grâce au fichier CMakeList.txt, va produire le script de compilation permettant la création de l'exécutable. Le fichier CMakeLists.txt est indépedant de la platefroem. Il décrit comment ocmpiler le projet à l'aide d'informations comme :  le langage utilisé, les fichiers à compiler, les dépendances. Ainsi CMake va pouvoir produire le script de compilation adéquat pour votre machine et votre projet.
 
-## Thrift 
+## Thrift
 
-Les fichier .thrift sont des fichier d'IDL (Interface Definition Language) qui décrivent: 
+Les fichier .thrift sont des fichier d'IDL (Interface Definition Language) qui décrivent:
 * les types et structures échangés
 * les exceptions
 * les services RPC
@@ -67,7 +71,7 @@ Pour générer le code cpp (qu'in peut déjà voir dan gen-cpp) on lance la comm
 
 Pour ce qui est des clients ils sont écris en lua. On génere leur code avec `thrift --gen lua social_network.thrift`. Ici je ne sais pas si c'est une différence de version (j'ai essayer avec thrift 12-13-14 et 18). Mais on doit retoucher au fichier générer. Prenez inspiration sur ceux qui existait déjà. Les erreurs que vous verrait potentiellement indique juste qu'ils faut redéclarer des variables et retourner le module à la fin des fichiers généré. C'est peut être pas très clair comme ça mais en regardant le code généré auparavant ça se fait facilement.
 
-## Jaeger 
+## Jaeger
 
 Jaeger (https://www.jaegertracing.io/) permet de monitorer et de tracer des micro-services.
 
@@ -93,7 +97,7 @@ Jaeger (https://www.jaegertracing.io/) permet de monitorer et de tracer des micr
     - [Article Supabase](https://supabase.com/blog/postgres-wasm)
 - Compiler du C vers WebAssembly sans Emscripten
     - [Article](https://surma.dev/things/c-to-webassembly/)
-- 
+-
 
 
 ## Application Social Network

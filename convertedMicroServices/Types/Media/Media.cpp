@@ -19,7 +19,7 @@ void Media::setMediaType(std::string _media_type) {
     this->media_type = _media_type;
 }
 
-EMSCRIPTEN_BINDINGS(media) {
+EMSCRIPTEN_BINDINGS(media_module) {
     class_<Media>("Media")
       .constructor<>()
       .property("media_id", &Media::getMediaId, &Media::setMediaId)

@@ -31,7 +31,7 @@ class UserHandler {
         Creator ComposeCreatorWithUsername(
             const std::string &
         );
-        std::string Login(
+        bool Login(
             const std::string &,
             const std::string &
         );
