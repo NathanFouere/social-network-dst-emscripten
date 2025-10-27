@@ -15,6 +15,7 @@ add_executable(
     Types/Media/Media.cpp
     PostStorageHandler/PostStorageHandler.cpp
     UniqueIdHandler/UniqueIdHandler.cpp
+    UserMentionHandler/UserMentionHandler.cpp
     MediaHandler/MediaHandler.cpp
     SocialGraphHandler/SocialGraphHandler.cpp
     UserHandler/UserHandler.cpp
