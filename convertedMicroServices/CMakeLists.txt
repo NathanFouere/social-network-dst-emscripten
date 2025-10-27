@@ -13,12 +13,15 @@ add_executable(
     Types/UserMention/UserMention.cpp
     Types/Post/Post.cpp
     Types/Media/Media.cpp
+    Types/TextServiceReturn/TextServiceReturn.cpp
     PostStorageHandler/PostStorageHandler.cpp
     UniqueIdHandler/UniqueIdHandler.cpp
     UserMentionHandler/UserMentionHandler.cpp
     MediaHandler/MediaHandler.cpp
     SocialGraphHandler/SocialGraphHandler.cpp
     UserHandler/UserHandler.cpp
+    UrlShortenHandler/UrlShortenHandler.cpp
+    TextHandler/TextHandler.cpp
 )
 
 set_target_properties(convertedMicroServices PROPERTIES
