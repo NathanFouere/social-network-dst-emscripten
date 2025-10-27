@@ -8,6 +8,8 @@ const socialGraphHandler = new module.SocialGraphHandler();
 const userHandler = new module.UserHandler(socialGraphHandler, uniqueIdHandler);
 const postStorageHandler = new module.PostStorageHandler();
 const userMentionHandler = new module.UserMentionHandler();
+const urlShortenHandler = new module.UrlShortenHandler();
+const textHandler = new module.TextHandler(urlShortenHandler, userMentionHandler);
 
 const di = {
   uniqueIdHandler: uniqueIdHandler,
@@ -16,6 +18,8 @@ const di = {
   userHandler: userHandler,
   postStorageHandler: postStorageHandler,
   userMentionHandler: userMentionHandler,
+  urlShortenHandler: urlShortenHandler,
+  textHandler: textHandler,
   module: module,
 }
 
