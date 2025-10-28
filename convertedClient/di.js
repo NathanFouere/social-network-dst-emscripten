@@ -10,6 +10,7 @@ const postStorageHandler = new module.PostStorageHandler();
 const userMentionHandler = new module.UserMentionHandler();
 const urlShortenHandler = new module.UrlShortenHandler();
 const textHandler = new module.TextHandler(urlShortenHandler, userMentionHandler);
+const userTimelineHandler = new module.UserTimelineHandler(postStorageHandler);
 
 const di = {
   uniqueIdHandler: uniqueIdHandler,
@@ -20,6 +21,7 @@ const di = {
   userMentionHandler: userMentionHandler,
   urlShortenHandler: urlShortenHandler,
   textHandler: textHandler,
+  userTimelineHandler: userTimelineHandler,
   module: module,
 }
 
