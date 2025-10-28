@@ -9,11 +9,9 @@ function followHandler(event) {
   const follweeeName = formData.get("followee_name");
   const username = formData.get("user_name");
 
-  // console.log("FolloweeName", follweeeName)
-  // console.log("Username", username)
-
   di.socialGraphHandler.FollowWithUsername(username, follweeeName);
 }
+
 
 document.querySelectorAll('.follow-form').forEach(f => {
   f.addEventListener('submit', followHandler);
