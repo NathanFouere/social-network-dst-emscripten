@@ -6,7 +6,20 @@
 
 using namespace emscripten;
 
-ComposePostHandler::ComposePostHandler() {}
+ComposePostHandler::ComposePostHandler(
+    UserTimelineHandler& userTimelineHandler,
+    UserHandler& userHandler,
+    UniqueIdHandler& uniqueIdHandler,
+    MediaHandler& mediaHandler,
+    TextHandler& textHandler,
+    HomeTimelineHandler& homeTimelineHandler
+) : userTimelineHandler(userTimelineHandler),
+    userHandler(userHandler),
+    uniqueIdHandler(uniqueIdHandler),
+    mediaHandler(mediaHandler),
+    textHandler(textHandler),
+    homeTimelineHandler(homeTimelineHandler
+) {}
 
 void ComposePostHandler::ComposePost(
     int64_t req_id,
@@ -39,6 +52,6 @@ void ComposePostHandler::ComposePost(
 
 EMSCRIPTEN_BINDINGS(compose_post_handler) {
     class_<ComposePostHandler>("ComposePostHandler")
-        .constructor<>()
+        .constructor<UserTimelineHandler&, UserHandler&, UniqueIdHandler&, MediaHandler&, TextHandler&, HomeTimelineHandler&>()
         .function("ComposePost", &ComposePostHandler::ComposePost);
 }
