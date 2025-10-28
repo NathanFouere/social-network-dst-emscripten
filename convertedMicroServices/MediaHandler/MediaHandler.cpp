@@ -34,8 +34,4 @@ EMSCRIPTEN_BINDINGS(media_handler) {
     class_<MediaHandler>("MediaHandler")
       .constructor<>()
       .function("ComposeMedia", &MediaHandler::ComposeMedia);
-    register_vector<std::string>("StringList");
-    register_vector<std::int64_t>("IntList");
-    register_vector<Media>("MediaList");
-    register_map<std::string, std::string>("StringStringMap");
 }

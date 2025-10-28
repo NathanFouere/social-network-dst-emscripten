@@ -77,4 +77,14 @@ EMSCRIPTEN_BINDINGS(post_module) {
         .property("timestamp", &Post::getTimestamp, &Post::setTimestamp)
         .property("post_type", &Post::getPostType, &Post::setPostType)
     ;
+
+    register_vector<UserMention>("UserMentionList");
+    register_vector<Media>("MediaList");
+    register_vector<Url>("UrlList");
+    register_vector<Post>("PostList");
+
+    // Register commonly used primitive lists and maps here to avoid duplicates
+    register_vector<std::int64_t>("IntList");
+    register_vector<std::string>("StringList");
+    register_map<std::string, std::string>("StringStringMap");
 }
