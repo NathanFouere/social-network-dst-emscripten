@@ -13,6 +13,7 @@ add_executable(
     Types/UserMention/UserMention.cpp
     Types/Url/Url.cpp
     Types/Post/Post.cpp
+    Types/Post/PostType.cpp
     Types/TextServiceReturn/TextServiceReturn.cpp
     UniqueIdHandler/UniqueIdHandler.cpp
     MediaHandler/MediaHandler.cpp

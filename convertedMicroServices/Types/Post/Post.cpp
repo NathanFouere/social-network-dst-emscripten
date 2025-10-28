@@ -66,12 +66,6 @@ PostType::type Post::getPostType() const {
 }
 
 EMSCRIPTEN_BINDINGS(post_module) {
-    enum_<PostType::type>("PostType")
-      .value("POST", PostType::POST)
-      .value("REPOST", PostType::REPOST)
-      .value("REPLY", PostType::REPLY)
-      .value("DM", PostType::DM);
-
     class_<Post>("Post")
         .constructor<>()
         .property("post_id", &Post::getPostId, &Post::setPostId)
