@@ -1,4 +1,4 @@
-import di from '../../di.js'
+import di from '../di.js'
 
 function clickEventHandler() {
     if (document.getElementById('media').value != "") {
