@@ -1,0 +1,36 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8" />
+  <title>Posts - Test</title>
+</head>
+<body>
+  <h1>Créer un post (simulation)</h1>
+
+  <form id="postform">
+    <label for="username-input">Username:</label>
+    <input id="username-input" type="text" value="alice" />
+    <br/>
+
+    <label for="text-input">Text:</label>
+    <textarea id="text-input">Bonjour depuis la page posts!</textarea>
+    <br/>
+
+    <label for="media-ids-input">Media IDs (comma separated):</label>
+    <input id="media-ids-input" type="text" value="100,101" />
+    <br/>
+
+    <label for="media-types-input">Media types (comma separated):</label>
+    <input id="media-types-input" type="text" value="image,video" />
+    <br/>
+
+    <button type="submit">Poster (simuler)</button>
+  </form>
+
+  <h2>Résultat</h2>
+  <pre id="output">(vide)</pre>
+
+  <script type="module" src="./posts-js.js"></script>
+</body>
+</html>
+

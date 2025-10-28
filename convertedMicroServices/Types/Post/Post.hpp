@@ -1,44 +1,56 @@
 #pragma once
 
+#include <cstdint>
 #include <string>
 #include <vector>
-#include "PostType.hpp"
-#include "../Media/Media.hpp"
+#include <map>
 #include "../Creator/Creator.hpp"
+#include "../Media/Media.hpp"
 #include "../UserMention/UserMention.hpp"
 #include "../Url/Url.hpp"
+#include "PostType.hpp"
+
+// Use PostType::type defined in PostType.hpp
 
 class Post {
-    public:
-        Post()
-            : post_id(0),
-            text(),
-            timestamp(0),
-            post_type(static_cast<PostType::type>(0)) {
-        }
-        void setPostId(int64_t _post_id);
-        int64_t getPostId() const;
-        void setCreator(const class Creator& _creator);
-        class Creator getCreator() const;
-        void setText(const std::string& _text);
-        std::string getText() const;
-        void setUserMentions(const std::vector<class UserMention>& _user_mentions);
-        std::vector<class UserMention> getUserMentions() const;
-        void setMedia(const std::vector<class Media>& _media);
-        std::vector<class Media> getMedia() const;
-        void setUrls(const std::vector<class Url>& _urls);
-        std::vector<class Url> getUrls() const;
-        void setTimestamp(int64_t _timestamp);
-        int64_t getTimestamp() const;
-        void setPostType(PostType::type _post_type);
-        PostType::type getPostType() const;
-    private:
-        int64_t post_id;
-        class Creator creator;
-        std::string text;
-        std::vector<class UserMention> user_mentions;
-        std::vector<class Media> media;
-        std::vector<class Url> urls;
-        int64_t timestamp;
-        PostType::type post_type;
+  public:
+    Post() noexcept
+      : post_id(0), creator(), req_id(0), text(), user_mentions(), media(), urls(), timestamp(0), post_type(PostType::POST) {}
+
+    int64_t getPostId() const;
+    void setPostId(int64_t v);
+
+    Creator getCreator() const;
+    void setCreator(const Creator &c);
+
+    int64_t getReqId() const;
+    void setReqId(int64_t v);
+
+    std::string getText() const;
+    void setText(const std::string &t);
+
+    std::vector<UserMention> getUserMentions() const;
+    void setUserMentions(const std::vector<UserMention> &ums);
+
+    std::vector<Media> getMedia() const;
+    void setMedia(const std::vector<Media> &m);
+
+    std::vector<Url> getUrls() const;
+    void setUrls(const std::vector<Url> &u);
+
+    int64_t getTimestamp() const;
+    void setTimestamp(int64_t t);
+
+    PostType::type getPostType() const;
+    void setPostType(PostType::type pt);
+
+    int64_t post_id;
+    Creator creator;
+    int64_t req_id;
+    std::string text;
+    std::vector<UserMention> user_mentions;
+    std::vector<Media> media;
+    std::vector<Url> urls;
+    int64_t timestamp;
+    PostType::type post_type;
 };
