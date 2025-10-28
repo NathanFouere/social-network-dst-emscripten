@@ -11,7 +11,8 @@ const userMentionHandler = new module.UserMentionHandler();
 const urlShortenHandler = new module.UrlShortenHandler();
 const textHandler = new module.TextHandler(urlShortenHandler, userMentionHandler);
 const userTimelineHandler = new module.UserTimelineHandler(postStorageHandler);
-const composePostHandler = new module.ComposePostHandler();
+const homeTimelineHandler = new module.HomeTimelineHandler(postStorageHandler, socialGraphHandler);
+const composePostHandler = new module.ComposePostHandler(userTimelineHandler, userHandler, uniqueIdHandler, mediaHandler, textHandler, homeTimelineHandler);
 
 const di = {
   uniqueIdHandler: uniqueIdHandler,
@@ -24,6 +25,7 @@ const di = {
   textHandler: textHandler,
   userTimelineHandler: userTimelineHandler,
   composePostHandler: composePostHandler,
+  homeTimelineHandler: homeTimelineHandler,
   module: module,
 }
 

@@ -25,6 +25,7 @@ add_executable(
     UrlShortenHandler/UrlShortenHandler.cpp
     TextHandler/TextHandler.cpp
     UserTimelineHandler/UserTimelineHandler.cpp
+    HomeTimelineHandler/HomeTimelineHandler.cpp
 )
 
 set_target_properties(convertedMicroServices PROPERTIES
