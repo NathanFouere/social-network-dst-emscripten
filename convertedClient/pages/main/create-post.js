@@ -47,6 +47,8 @@ document.getElementById('create-post')
 var hide = document.getElementById('hide-post');
 var show = document.getElementById('show-post');
 
+$("#compose").hide(); // cache par défaut la création de post
+
 hide.addEventListener("click", function () {
     $("#compose").hide();
 })

@@ -9,6 +9,7 @@ function followHandler(event) {
   const follweeeName = formData.get("followee_name");
   const username = formData.get("user_name");
 
+  window.location.href = "../contact/contact.html"
   di.socialGraphHandler.FollowWithUsername(username, follweeeName);
 }
 
