@@ -14,4 +14,5 @@ class SocialGraphHandler {
     void Follow(int64_t user_id, int64_t followee_id);
     void Unfollow(int64_t user_id, int64_t followee_id);
     void FollowWithUsername(const std::string &user_name, const std::string &followee_name);
+    void UnfollowWithUsername(const std::string &user_name, const std::string &followee_name);
 };
