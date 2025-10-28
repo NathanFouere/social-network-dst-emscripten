@@ -33,6 +33,10 @@ void SocialGraphHandler::FollowWithUsername(const std::string &user_name, const 
     std::cout << "Follow With Username Appelé !" << std::endl;
 }
 
+void SocialGraphHandler::UnfollowWithUsername(const std::string &user_name, const std::string &followee_name) {
+    std::cout << "Unfollow With Username Appelé !" << std::endl;
+}
+
 EMSCRIPTEN_BINDINGS(social_graph_module) {
     class_<SocialGraphHandler>("SocialGraphHandler")
         .constructor<>()
@@ -42,5 +46,6 @@ EMSCRIPTEN_BINDINGS(social_graph_module) {
         .function("Follow", &SocialGraphHandler::Follow)
         .function("Unfollow", &SocialGraphHandler::Unfollow)
         .function("FollowWithUsername", &SocialGraphHandler::FollowWithUsername)
+        .function("UnfollowWithUsername", &SocialGraphHandler::UnfollowWithUsername)
     ;
 }
