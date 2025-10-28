@@ -23,6 +23,6 @@ EMSCRIPTEN_BINDINGS(user_mention_module) {
     class_<UserMention>("UserMention")
         .constructor<>()
         .property("user_id", &UserMention::getUserId, &UserMention::setUserId)
-        .property("username", &UserMention::getUsername, &UserMention::setUsername
-    );
+        .property("username", &UserMention::getUsername, &UserMention::setUsername)
+    ;
 }

@@ -35,6 +35,6 @@ EMSCRIPTEN_BINDINGS(text_service_return_module) {
         .constructor<>()
         .property("text", &TextServiceReturn::getText, &TextServiceReturn::setText)
         .property("user_mentions", &TextServiceReturn::getUserMentions, &TextServiceReturn::setUserMentions)
-        .property("urls", &TextServiceReturn::getUrls, &TextServiceReturn::setUrls
-    );
+        .property("urls", &TextServiceReturn::getUrls, &TextServiceReturn::setUrls)
+    ;
 }

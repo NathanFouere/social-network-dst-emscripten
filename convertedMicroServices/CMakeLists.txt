@@ -14,13 +14,13 @@ add_executable(
     Types/Url/Url.cpp
     Types/Post/Post.cpp
     Types/TextServiceReturn/TextServiceReturn.cpp
-    PostStorageHandler/PostStorageHandler.cpp
     UniqueIdHandler/UniqueIdHandler.cpp
-    UserMentionHandler/UserMentionHandler.cpp
     MediaHandler/MediaHandler.cpp
     SocialGraphHandler/SocialGraphHandler.cpp
     UserHandler/UserHandler.cpp
-    ComposePostService/ComposePostService.cpp
+    PostStorageHandler/PostStorageHandler.cpp
+    UserMentionHandler/UserMentionHandler.cpp
+    ComposePostHandler/ComposePostHandler.cpp
     UrlShortenHandler/UrlShortenHandler.cpp
     TextHandler/TextHandler.cpp
     UserTimelineHandler/UserTimelineHandler.cpp
