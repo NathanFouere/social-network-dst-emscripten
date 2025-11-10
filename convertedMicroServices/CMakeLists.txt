@@ -22,7 +22,6 @@ add_executable(
     PostStorageHandler/PostStorageHandler.cpp
     UserMentionHandler/UserMentionHandler.cpp
     ComposePostHandler/ComposePostHandler.cpp
-    UrlShortenHandler/UrlShortenHandler.cpp
     TextHandler/TextHandler.cpp
     UserTimelineHandler/UserTimelineHandler.cpp
     HomeTimelineHandler/HomeTimelineHandler.cpp
