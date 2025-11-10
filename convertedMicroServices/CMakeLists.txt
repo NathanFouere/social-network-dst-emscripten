@@ -25,6 +25,7 @@ add_executable(
     TextHandler/TextHandler.cpp
     UserTimelineHandler/UserTimelineHandler.cpp
     HomeTimelineHandler/HomeTimelineHandler.cpp
+    InMemoryPersistenceService/InMemoryPersistenceService.cpp
 )
 
 set_target_properties(convertedMicroServices PROPERTIES

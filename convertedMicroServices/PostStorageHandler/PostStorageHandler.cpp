@@ -37,5 +37,6 @@ EMSCRIPTEN_BINDINGS(post_storage_module) {
         .constructor<>()
         .function("StorePost", &PostStorageHandler::StorePost)
         .function("ReadPost", &ReadPost)
-        .function("ReadPosts", &ReadPosts);
+        .function("ReadPosts", &ReadPosts)
+    ;
 }

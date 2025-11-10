@@ -15,7 +15,7 @@
 class Post {
   public:
     Post() noexcept
-      : post_id(0), creator(), req_id(0), text(), user_mentions(), media(), urls(), timestamp(0), post_type(PostType::POST) {}
+      : post_id(0), creator(), text(), user_mentions(), media(), urls(), timestamp(0), post_type(PostType::POST) {}
 
     int64_t getPostId() const;
     void setPostId(int64_t v);
@@ -46,7 +46,6 @@ class Post {
 
     int64_t post_id;
     Creator creator;
-    int64_t req_id;
     std::string text;
     std::vector<UserMention> user_mentions;
     std::vector<Media> media;

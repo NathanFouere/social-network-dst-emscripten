@@ -8,11 +8,11 @@ const socialGraphHandler = new module.SocialGraphHandler();
 const userHandler = new module.UserHandler(socialGraphHandler, uniqueIdHandler);
 const postStorageHandler = new module.PostStorageHandler();
 const userMentionHandler = new module.UserMentionHandler();
-const urlShortenHandler = new module.UrlShortenHandler();
-const textHandler = new module.TextHandler(urlShortenHandler, userMentionHandler);
+const textHandler = new module.TextHandler(userMentionHandler);
 const userTimelineHandler = new module.UserTimelineHandler(postStorageHandler);
 const homeTimelineHandler = new module.HomeTimelineHandler(postStorageHandler, socialGraphHandler);
-const composePostHandler = new module.ComposePostHandler(userTimelineHandler, userHandler, uniqueIdHandler, mediaHandler, textHandler, homeTimelineHandler);
+const inMemoryPersistenceService = new module.InMemoryPersistenceService();
+const composePostHandler = new module.ComposePostHandler(userTimelineHandler, userHandler, uniqueIdHandler, mediaHandler, textHandler, homeTimelineHandler, inMemoryPersistenceService);
 
 const di = {
   uniqueIdHandler: uniqueIdHandler,
@@ -21,11 +21,11 @@ const di = {
   userHandler: userHandler,
   postStorageHandler: postStorageHandler,
   userMentionHandler: userMentionHandler,
-  urlShortenHandler: urlShortenHandler,
   textHandler: textHandler,
   userTimelineHandler: userTimelineHandler,
   composePostHandler: composePostHandler,
   homeTimelineHandler: homeTimelineHandler,
+  inMemoryPersistenceService: inMemoryPersistenceService,
   module: module,
 }
 

@@ -22,22 +22,19 @@ function clickEventHandler() {
 
 function uploadPost(media_json) {
     if (document.getElementById('post-content').value !== "") {
-        // const Http = new XMLHttpRequest();
-        // const url = 'http://' + window.location.hostname + ':8080/api/post/compose';
-        // Http.open("POST", url, true);
         var body = document.getElementById('post-content').value
-        console.log("Composing post with body:", body);
-        // Http.onreadystatechange = function () {
-        //     if (this.readyState == 4 && this.status == 200) {
-        //         console.log(Http.responseText);
-        //     }
-        // };
-        // if (media_json === undefined) {
-        //     Http.send(body);
-        // } else {
-        //     body += "&media_ids=[\"" + media_json.media_id + "\"]&media_types=[\"" + media_json.media_type + "\"]"
-        //     Http.send(body);
-        // }
+
+        di.composePostHandler.ComposePost(
+          "username mock",
+          1,
+          body,
+          di.module.PostType.POST
+        );
+
+      console.log(di.inMemoryPersistenceService.GetAllPosts().get(0).post_id);
+      console.log(di.inMemoryPersistenceService.GetAllPosts().get(0).text);
+      
+      
         // window.location.reload();
     }
 }
