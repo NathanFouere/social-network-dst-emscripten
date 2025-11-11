@@ -28,11 +28,13 @@ Post ComposePostHandler::ComposePost(
 ) {
     Post* post = new Post();
     post->setPostId(this->uniqueIdHandler.ComposeUniqueId());
-    Creator* fakeCreator = new Creator();
-    post->setCreator(*fakeCreator);
+    Creator* creator = new Creator();
+    creator->setUserId(user_id);
+    creator->setUsername(username);
+    post->setCreator(*creator);
     post->setText(text);
     post->setPostType(post_type);
-    
+
     this->inMemoryPersistenceService.SavePost(*post);
     return *post;
 }
@@ -40,12 +42,12 @@ Post ComposePostHandler::ComposePost(
 EMSCRIPTEN_BINDINGS(compose_post_handler) {
     class_<ComposePostHandler>("ComposePostHandler")
         .constructor<
-            UserTimelineHandler&, 
-            UserHandler&, 
-            UniqueIdHandler&, 
-            MediaHandler&, 
-            TextHandler&, 
-            HomeTimelineHandler&, 
+            UserTimelineHandler&,
+            UserHandler&,
+            UniqueIdHandler&,
+            MediaHandler&,
+            TextHandler&,
+            HomeTimelineHandler&,
             InMemoryPersistenceService&
         >()
         .function("ComposePost", &ComposePostHandler::ComposePost)

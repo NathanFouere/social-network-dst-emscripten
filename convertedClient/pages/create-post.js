@@ -23,19 +23,13 @@ function clickEventHandler() {
 function uploadPost(media_json) {
     if (document.getElementById('post-content').value !== "") {
         var body = document.getElementById('post-content').value
-
+        const loggedUser = di.sessionStorageUserService.getLoggedUser();
         di.composePostHandler.ComposePost(
-          "username mock",
-          1,
+          loggedUser.username,
+          loggedUser.userid,
           body,
           di.module.PostType.POST
         );
-
-      console.log(di.inMemoryPersistenceService.GetAllPosts().get(0).post_id);
-      console.log(di.inMemoryPersistenceService.GetAllPosts().get(0).text);
-      di.inMemoryPersistenceService.SaveAllInLocalStorage()
-      console.log(JSON.parse(localStorage.getItem("posts")))
-
 
         // window.location.reload();
     }
