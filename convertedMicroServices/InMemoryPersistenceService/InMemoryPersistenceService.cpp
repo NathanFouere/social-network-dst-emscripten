@@ -55,7 +55,6 @@ InMemoryPersistenceService::InMemoryPersistenceService() {
    for (json postJson: postsJson) {
        this->posts.push_back(loadPostFromJson(postJson));
    }
-   this->SaveAllInLocalStorage(); // TODO => optimiser ça
 }
 
 void InMemoryPersistenceService::SavePost(const Post& post) {
@@ -93,6 +92,4 @@ EMSCRIPTEN_BINDINGS(in_memory_persistence_module) {
         .function("GetPostsByUserId", &InMemoryPersistenceService::GetPostsByUserId)
         .function("SaveAllInLocalStorage", &InMemoryPersistenceService::SaveAllInLocalStorage)
     ;
-
-    register_vector<Post>("PostList");
 }

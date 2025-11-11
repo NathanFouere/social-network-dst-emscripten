@@ -65,7 +65,7 @@ EMSCRIPTEN_BINDINGS(post_module) {
 
     register_vector<UserMention>("UserMentionList");
 
-    // Register commonly used primitive lists and maps here to avoid duplicates
+    register_vector<Post>("PostList");
     register_vector<std::int64_t>("IntList");
     register_vector<std::string>("StringList");
     register_map<std::string, std::string>("StringStringMap");
