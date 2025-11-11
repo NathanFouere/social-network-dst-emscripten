@@ -14,6 +14,7 @@ add_executable(
     Types/Url/Url.cpp
     Types/Post/Post.cpp
     Types/Post/PostType.cpp
+    Types/User/User.cpp
     Types/TextServiceReturn/TextServiceReturn.cpp
     UniqueIdHandler/UniqueIdHandler.cpp
     MediaHandler/MediaHandler.cpp
@@ -26,6 +27,7 @@ add_executable(
     UserTimelineHandler/UserTimelineHandler.cpp
     HomeTimelineHandler/HomeTimelineHandler.cpp
     InMemoryPersistenceService/InMemoryPersistenceService.cpp
+    SessionStorageUserService/SessionStorageUserService.cpp
 )
 
 set_target_properties(convertedMicroServices PROPERTIES

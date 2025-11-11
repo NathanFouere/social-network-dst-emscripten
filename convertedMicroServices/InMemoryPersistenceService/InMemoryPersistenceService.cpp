@@ -29,12 +29,12 @@ static Post loadPostFromJson(json j) {
 }
 
 
-EM_JS(void, save_in_local_storage_js, (const char* json_cstr), {
-    const json = UTF8ToString(json_cstr);
+EM_JS(void, save_in_local_storage_js, (const char* posts_json_cstr), {
+    const posts_json_utf_8 = UTF8ToString(posts_json_cstr);
     console.log("Saving all to local storage ...");
 
-    console.log("Saving all posts ...", JSON.parse(json));
-    localStorage.setItem('posts', json);
+    console.log("Saving all posts ...", JSON.parse(posts_json_utf_8));
+    localStorage.setItem('posts', posts_json_utf_8);
     console.log("All posts saved to local storage.");
 
     console.log("Saved successfully !");
@@ -47,21 +47,20 @@ EM_JS(char*, get_posts_from_local_storage_js, (), {
 
    console.log("Loaded posts successfully !");
 
-   const parsedJson = JSON.parse(posts_json_str);
-
    return stringToNewUTF8(posts_json_str);
 });
 
 InMemoryPersistenceService::InMemoryPersistenceService() {
-    json postsJson = json::parse(get_posts_from_local_storage_js());
+   json postsJson = json::parse(get_posts_from_local_storage_js());
    for (json postJson: postsJson) {
-       std::cout << "Loading post: " << postJson.dump() << std::endl;
-       this->SavePost(loadPostFromJson(postJson));
+       this->posts.push_back(loadPostFromJson(postJson));
    }
+   this->SaveAllInLocalStorage(); // TODO => optimiser ça
 }
 
 void InMemoryPersistenceService::SavePost(const Post& post) {
     this->posts.push_back(post);
+    this->SaveAllInLocalStorage(); // TODO => optimiser ça
 }
 
 std::vector<Post> InMemoryPersistenceService::GetAllPosts() const {

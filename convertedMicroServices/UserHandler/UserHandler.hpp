@@ -6,11 +6,16 @@
 #include "../Types/Creator/Creator.hpp"
 #include "../SocialGraphHandler/SocialGraphHandler.hpp"
 #include "../UniqueIdHandler/UniqueIdHandler.hpp"
+#include "../SessionStorageUserService/SessionStorageUserService.hpp"
 #include <map>
 
 class UserHandler {
     public:
-        UserHandler(SocialGraphHandler& socialGraphHandler, UniqueIdHandler& uniqueIdHandler);
+        UserHandler(
+            SocialGraphHandler& socialGraphHandler, 
+            UniqueIdHandler& uniqueIdHandler,
+            SessionStorageUserService& sessionStorageUserService
+        );
         void RegisterUser(
             const std::string &,
             const std::string &,
@@ -41,4 +46,5 @@ class UserHandler {
     private:
         SocialGraphHandler& socialGraphHandler;
         UniqueIdHandler& uniqueIdHandler;
+        SessionStorageUserService& sessionStrageUserService;
 };

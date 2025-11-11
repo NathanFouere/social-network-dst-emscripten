@@ -5,7 +5,8 @@ var module = await Module();
 const uniqueIdHandler = new module.UniqueIdHandler("abc");
 const mediaHandler = new module.MediaHandler();
 const socialGraphHandler = new module.SocialGraphHandler();
-const userHandler = new module.UserHandler(socialGraphHandler, uniqueIdHandler);
+const sessionStorageUserService = new module.SessionStorageUserService();
+const userHandler = new module.UserHandler(socialGraphHandler, uniqueIdHandler, sessionStorageUserService);
 const postStorageHandler = new module.PostStorageHandler();
 const userMentionHandler = new module.UserMentionHandler();
 const textHandler = new module.TextHandler(userMentionHandler);
@@ -26,6 +27,7 @@ const di = {
   composePostHandler: composePostHandler,
   homeTimelineHandler: homeTimelineHandler,
   inMemoryPersistenceService: inMemoryPersistenceService,
+  sessionStorageUserService: sessionStorageUserService,
   module: module,
 }
 

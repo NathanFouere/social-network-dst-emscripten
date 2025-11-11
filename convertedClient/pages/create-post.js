@@ -40,6 +40,7 @@ function uploadPost(media_json) {
         // window.location.reload();
     }
 }
+
 document.getElementById('create-post')
   .addEventListener('click', clickEventHandler);
 

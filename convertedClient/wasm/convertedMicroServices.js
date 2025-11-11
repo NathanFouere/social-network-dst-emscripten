@@ -6507,8 +6507,10 @@ unexportedSymbols.forEach(unexportedRuntimeSymbol);
 function checkIncomingModuleAPI() {
   ignoredModuleProp('fetchSettings');
 }
-function save_in_local_storage_js(json_cstr) { const json = UTF8ToString(json_cstr); console.log("Saving all to local storage ..."); console.log("Saving all posts ...", JSON.parse(json)); localStorage.setItem('posts', json); console.log("All posts saved to local storage."); console.log("Saved successfully !"); }
-function get_posts_from_local_storage_js() { console.log("Loading posts from local storage"); const posts_json_str = localStorage.getItem('posts'); console.log("Loaded posts successfully !"); const parsedJson = JSON.parse(posts_json_str); return stringToNewUTF8(posts_json_str); }
+function save_in_local_storage_js(posts_json_cstr) { const posts_json_utf_8 = UTF8ToString(posts_json_cstr); console.log("Saving all to local storage ..."); console.log("Saving all posts ...", JSON.parse(posts_json_utf_8)); localStorage.setItem('posts', posts_json_utf_8); console.log("All posts saved to local storage."); console.log("Saved successfully !"); }
+function get_posts_from_local_storage_js() { console.log("Loading posts from local storage"); const posts_json_str = localStorage.getItem('posts'); console.log("Loaded posts successfully !"); return stringToNewUTF8(posts_json_str); }
+function get_user_in_session_storage_js() { console.log("Loading user from session storage"); const user_json_str = sessionStorage.getItem('user'); return stringToNewUTF8(user_json_str); }
+function add_user_in_session_storage_js(user_json_cstr) { const user_json_utf_8 = UTF8ToString(user_json_cstr); console.log("Saving user in session storage"); console.log("Saving user ...", JSON.parse(user_json_utf_8)); sessionStorage.setItem('user', user_json_utf_8); console.log("User has been saved to storage"); }
 
 // Imports from the Wasm binary.
 var ___getTypeName = makeInvalidEarlyAccess('___getTypeName');
@@ -6588,6 +6590,8 @@ var wasmImports = {
   /** @export */
   _tzset_js: __tzset_js,
   /** @export */
+  add_user_in_session_storage_js,
+  /** @export */
   clock_time_get: _clock_time_get,
   /** @export */
   emscripten_resize_heap: _emscripten_resize_heap,
@@ -6605,6 +6609,8 @@ var wasmImports = {
   fd_write: _fd_write,
   /** @export */
   get_posts_from_local_storage_js,
+  /** @export */
+  get_user_in_session_storage_js,
   /** @export */
   save_in_local_storage_js
 };
