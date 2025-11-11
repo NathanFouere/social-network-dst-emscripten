@@ -1,1 +1,0 @@
-cmd='/home/nathanf/Documents/Cours/death-star-bench-social-network/downloads/libmemcached/configure;--prefix=;LDFLAGS=-L'
