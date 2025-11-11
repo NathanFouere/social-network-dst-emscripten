@@ -30,12 +30,7 @@ Post ComposePostHandler::ComposePost(
     post->setPostId(this->uniqueIdHandler.ComposeUniqueId());
     Creator* fakeCreator = new Creator();
     post->setCreator(*fakeCreator);
-    Media* fakeMedia = new Media();
-    std::vector<Media> fakeMedias {*fakeMedia};
-    post->setMedia(fakeMedias);
     post->setText(text);
-    post->urls = {}; // TODO
-    post->user_mentions = {}; // TODO
     post->setPostType(post_type);
     
     this->inMemoryPersistenceService.SavePost(*post);

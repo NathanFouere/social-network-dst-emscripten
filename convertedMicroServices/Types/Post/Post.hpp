@@ -5,17 +5,20 @@
 #include <vector>
 #include <map>
 #include "../Creator/Creator.hpp"
-#include "../Media/Media.hpp"
 #include "../UserMention/UserMention.hpp"
-#include "../Url/Url.hpp"
 #include "PostType.hpp"
+#include <nlohmann/json.hpp>
+
+using nlohmann::json;
 
 // Use PostType::type defined in PostType.hpp
 
 class Post {
   public:
     Post() noexcept
-      : post_id(0), creator(), text(), user_mentions(), media(), urls(), timestamp(0), post_type(PostType::POST) {}
+      : post_id(0), creator(), text(), timestamp(0), post_type(PostType::POST) {}
+      
+    json toJson() const;
 
     int64_t getPostId() const;
     void setPostId(int64_t v);
@@ -32,12 +35,6 @@ class Post {
     std::vector<UserMention> getUserMentions() const;
     void setUserMentions(const std::vector<UserMention> &ums);
 
-    std::vector<Media> getMedia() const;
-    void setMedia(const std::vector<Media> &m);
-
-    std::vector<Url> getUrls() const;
-    void setUrls(const std::vector<Url> &u);
-
     int64_t getTimestamp() const;
     void setTimestamp(int64_t t);
 
@@ -47,9 +44,6 @@ class Post {
     int64_t post_id;
     Creator creator;
     std::string text;
-    std::vector<UserMention> user_mentions;
-    std::vector<Media> media;
-    std::vector<Url> urls;
     int64_t timestamp;
     PostType::type post_type;
 };

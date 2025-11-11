@@ -40,6 +40,6 @@ target_link_libraries(
 
 if(CMAKE_SYSTEM_NAME MATCHES "Emscripten")
     set_target_properties(convertedMicroServices PROPERTIES
-        LINK_FLAGS "--bind -sALLOW_MEMORY_GROWTH=1 -sMODULARIZE=1 -sEXPORT_ES6=1"
+        LINK_FLAGS "--bind -sALLOW_MEMORY_GROWTH=1 -sMODULARIZE=1 -sEXPORT_ES6=1 -sEXPORTED_RUNTIME_METHODS=[\\\"stringToNewUTF8\\\"]"
     )
 endif()

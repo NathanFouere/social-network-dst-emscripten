@@ -19,6 +19,13 @@ void Creator::setUsername(std::string _username) {
     this->username = _username;
 }
 
+json Creator::toJson() const {
+    json j;
+    j["user_id"] = user_id;
+    j["username"] = username;
+    return j;
+}
+
 EMSCRIPTEN_BINDINGS(creator_module) {
     class_<Creator>("Creator")
         .constructor<>()

@@ -9,6 +9,7 @@ class InMemoryPersistenceService {
         void SavePost(const Post& post);
         std::vector<Post> GetAllPosts() const;
         std::vector<Post> GetPostsByUserId(int64_t user_id) const;
+        void SaveAllInLocalStorage();
     private:
         std::vector<Post> posts;
 };

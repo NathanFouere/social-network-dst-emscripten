@@ -33,8 +33,10 @@ function uploadPost(media_json) {
 
       console.log(di.inMemoryPersistenceService.GetAllPosts().get(0).post_id);
       console.log(di.inMemoryPersistenceService.GetAllPosts().get(0).text);
-      
-      
+      di.inMemoryPersistenceService.SaveAllInLocalStorage()
+      console.log(JSON.parse(localStorage.getItem("posts")))
+
+
         // window.location.reload();
     }
 }
