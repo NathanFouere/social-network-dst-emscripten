@@ -44,16 +44,22 @@ EM_JS(char*, get_posts_from_local_storage_js, (), {
    console.log("Loading posts from local storage");
 
    const posts_json_str = localStorage.getItem('posts');
-
-   console.log("Loaded posts successfully !");
-
+   console.log(posts_json_str);
+   console.log("Loaded posts successfully !", posts_json_str);
+   if(null == posts_json_str) {
+       console.log("c'est null");
+       return null;
+   }
    return stringToNewUTF8(posts_json_str);
 });
 
 InMemoryPersistenceService::InMemoryPersistenceService() {
-   json postsJson = json::parse(get_posts_from_local_storage_js());
-   for (json postJson: postsJson) {
-       this->posts.push_back(loadPostFromJson(postJson));
+   auto postsFromLocalStorage = get_posts_from_local_storage_js();
+   if (postsFromLocalStorage != nullptr) {
+       json postsJson = json::parse(postsFromLocalStorage);
+       for (json postJson: postsJson) {
+           this->posts.push_back(loadPostFromJson(postJson));
+       }
    }
 }
 
