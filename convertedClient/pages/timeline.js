@@ -4,7 +4,7 @@ export default function showTimeline(type) {
   const loggedUser = di.sessionStorageUserService.getLoggedUser();
 
     if(type == "main") {
-    const posts = di.homeTimelineHandler.ReadHomeTimeline(loggedUser.userid, 1, 10);
+    const posts = di.homeTimelineHandler.ReadHomeTimeline(loggedUser.userid, 0, 10);
 
     const post_cards = document.getElementsByClassName("post-card");
     const post_texts = document.getElementsByClassName("post-text");
