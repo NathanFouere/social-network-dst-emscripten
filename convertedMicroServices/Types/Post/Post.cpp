@@ -11,10 +11,10 @@ int64_t Post::getPostId() const {
 json Post::toJson() const {
     json j;
     j["post_id"] = post_id;
-    j["creator"] = creator.toJson(); // TODO
+    j["creator"] = creator.toJson();
     j["text"] = text;
     j["timestamp"] = timestamp;
-    j["post_type"] = "Post"; // TODO
+    j["post_type"] = post_type; 
     return j;
 }
 

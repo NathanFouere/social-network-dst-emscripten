@@ -1,20 +1,8 @@
 import di from "../di.js";
-import showTimeline from "./timeline.js";
 
 function clickEventHandler() {
   if (document.getElementById("media").value != "") {
-    // console.log(document);
-    // var formData = new FormData(document.getElementById('media-form'));
-    // const Http = new XMLHttpRequest();
-    // const url = 'http://' + window.location.hostname + ':8081/upload-media';
-    // Http.onreadystatechange = function () {
-    //     if (this.readyState == 4 && this.status == 200) {
-    //         var resp = JSON.parse(Http.responseText);
-    //         uploadPost(resp);
-    //     }
-    // };
-    // Http.open("POST", url, true);
-    // Http.send(formData);
+    // TODO
   } else {
     uploadPost();
   }
@@ -30,8 +18,7 @@ function uploadPost(media_json) {
       body,
       di.module.PostType.POST,
     );
-    showTimeline("main");
-    // window.location.reload();
+    window.location.reload();
   }
 }
 

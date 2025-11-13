@@ -11,6 +11,8 @@ export default function showTimeline(type) {
     const post_times = document.getElementsByClassName("post-time");
     const post_creators = document.getElementsByClassName("post-creator");
     const post_deletes_button = document.getElementsByClassName("delete-post-btn");
+    const post_edits_button = document.getElementsByClassName("edit-post-btn");
+
     for (var i = 0; i < posts.size(); i++) {
 
       if (i == post_cards.length - 1) {
@@ -29,6 +31,11 @@ export default function showTimeline(type) {
 
       post_deletes_button[i].onclick = () => {
         di.postStorageHandler.DeletePost(p.post_id);
+        window.location.reload();
+      };
+
+      post_edits_button[i].onclick = () => {
+        di.postStorageHandler.EditPostText(p.post_id, "edited post");
         window.location.reload();
       };
     }

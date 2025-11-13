@@ -60,7 +60,15 @@ std::vector<Post> PostStorageHandler::GetAllPosts() const {
     return this->posts;
 }
 
-
+void PostStorageHandler::EditPostText(int64_t post_id, std::string newText) {
+    for (std::size_t i = 0; i < posts.size(); i++) {
+        if (this->posts[i].post_id == post_id) {
+            this->posts[i].setText(newText);
+            this->SaveAllInLocalStorage();
+            return;
+        }
+    }
+}
 
 void PostStorageHandler::DeletePost(int64_t post_id) {
     for (std::size_t i = 0; i < posts.size(); i++) {
@@ -108,5 +116,6 @@ EMSCRIPTEN_BINDINGS(post_storage_module) {
         .constructor<>()
         .function("StorePost", &PostStorageHandler::StorePost)
         .function("DeletePost", &PostStorageHandler::DeletePost)
+        .function("EditPostText", &PostStorageHandler::EditPostText)
     ;
 }
