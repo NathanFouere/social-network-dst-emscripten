@@ -1,6 +1,6 @@
 import di from '../di.js'
 
-function showTimeline(type) {
+export default function showTimeline(type) {
   const loggedUser = di.sessionStorageUserService.getLoggedUser();
 
     if(type == "main") {
@@ -11,7 +11,6 @@ function showTimeline(type) {
     const post_texts = document.getElementsByClassName("post-text");
     const post_times = document.getElementsByClassName("post-time");
     const post_creators = document.getElementsByClassName("post-creator");
-    const post_images = document.getElementsByClassName("post-img");
     const post_footer = document.getElementsByClassName("post-footer");
     for (var i = 0; i < posts.size(); i++) {
       if (i == post_cards.length - 1) {
@@ -21,7 +20,8 @@ function showTimeline(type) {
       }
       post_cards[i].style.display = "block";
       post_texts[i].innerHTML = posts.get(i).text;
-      post_times[i].innerText = posts.get(i).timestamp;
+      post_times[i].innerText = new Date(Number(posts.get(i).timestamp) * 1000);
+      post_creators[i].innerText = posts.get(i).creator.username;
     }
   }
 }

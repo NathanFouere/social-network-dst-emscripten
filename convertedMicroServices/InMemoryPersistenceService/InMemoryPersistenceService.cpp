@@ -47,13 +47,13 @@ EM_JS(char*, get_posts_from_local_storage_js, (), {
    console.log(posts_json_str);
    console.log("Loaded posts successfully !", posts_json_str);
    if(null == posts_json_str) {
-       console.log("c'est null");
        return null;
    }
    return stringToNewUTF8(posts_json_str);
 });
 
 InMemoryPersistenceService::InMemoryPersistenceService() {
+    // charge tous les posts depuis le local storage lors de l'initialisation du service
    auto postsFromLocalStorage = get_posts_from_local_storage_js();
    if (postsFromLocalStorage != nullptr) {
        json postsJson = json::parse(postsFromLocalStorage);

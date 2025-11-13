@@ -3108,6 +3108,7 @@ async function createWasm() {
     ;
   }
 
+
   var getHeapMax = () =>
       // Stay one Wasm page short of 4GB: while e.g. Chrome is able to allocate
       // full 4GB Wasm memories, the size will wrap back to 0 bytes in Wasm side
@@ -6508,7 +6509,7 @@ function checkIncomingModuleAPI() {
   ignoredModuleProp('fetchSettings');
 }
 function save_in_local_storage_js(posts_json_cstr) { const posts_json_utf_8 = UTF8ToString(posts_json_cstr); console.log("Saving all to local storage ..."); console.log("Saving all posts ...", JSON.parse(posts_json_utf_8)); localStorage.setItem('posts', posts_json_utf_8); console.log("All posts saved to local storage."); console.log("Saved successfully !"); }
-function get_posts_from_local_storage_js() { console.log("Loading posts from local storage"); const posts_json_str = localStorage.getItem('posts'); console.log(posts_json_str); console.log("Loaded posts successfully !", posts_json_str); if(null == posts_json_str) { console.log("c'est null"); return null; } return stringToNewUTF8(posts_json_str); }
+function get_posts_from_local_storage_js() { console.log("Loading posts from local storage"); const posts_json_str = localStorage.getItem('posts'); console.log(posts_json_str); console.log("Loaded posts successfully !", posts_json_str); if(null == posts_json_str) { return null; } return stringToNewUTF8(posts_json_str); }
 function get_user_in_session_storage_js() { console.log("Loading user from session storage"); const user_json_str = sessionStorage.getItem('user'); return stringToNewUTF8(user_json_str); }
 function add_user_in_session_storage_js(user_json_cstr) { const user_json_utf_8 = UTF8ToString(user_json_cstr); console.log("Saving user in session storage"); console.log("Saving user ...", JSON.parse(user_json_utf_8)); sessionStorage.setItem('user', user_json_utf_8); console.log("User has been saved to storage"); }
 
@@ -6593,6 +6594,8 @@ var wasmImports = {
   add_user_in_session_storage_js,
   /** @export */
   clock_time_get: _clock_time_get,
+  /** @export */
+  emscripten_date_now: _emscripten_date_now,
   /** @export */
   emscripten_resize_heap: _emscripten_resize_heap,
   /** @export */

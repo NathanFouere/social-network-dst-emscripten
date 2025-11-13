@@ -34,7 +34,10 @@ Post ComposePostHandler::ComposePost(
     post->setCreator(*creator);
     post->setText(text);
     post->setPostType(post_type);
-
+    time_t timestamp;
+    time(&timestamp);
+    post->setTimestamp(timestamp);
+    
     this->inMemoryPersistenceService.SavePost(*post);
     return *post;
 }

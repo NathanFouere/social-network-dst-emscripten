@@ -4,6 +4,7 @@
 #include <iostream>
 #include <string>
 #include <vector>
+#include <time.h>
 #include "../Types/Post/Post.hpp"
 #include "../UserTimelineHandler/UserTimelineHandler.hpp"
 #include "../UserHandler/UserHandler.hpp"
@@ -26,7 +27,7 @@ class ComposePostHandler {
             HomeTimelineHandler& homeTimelineHandler,
             InMemoryPersistenceService& inMemoryPersistenceService
         );
-    
+
         Post ComposePost(
             const std::string &username,
             int64_t user_id,
