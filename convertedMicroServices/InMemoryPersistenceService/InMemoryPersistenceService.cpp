@@ -1,4 +1,5 @@
 #include "InMemoryPersistenceService.hpp"
+#include <cstdint>
 #include <emscripten/bind.h>
 #include <emscripten.h>
 #include <nlohmann/json.hpp>
@@ -82,6 +83,25 @@ std::vector<Post> InMemoryPersistenceService::GetPostsByUserId(int64_t user_id) 
     return result;
 }
 
+void InMemoryPersistenceService::DeletePost(int64_t post_id) {
+    for (std::size_t i = 0; i < posts.size(); i++) {
+        if (this->posts[i].post_id == post_id) {
+            this->posts.erase(this->posts.begin() + i);
+            this->SaveAllInLocalStorage();
+            return;
+        }
+    }
+}
+
+Post* InMemoryPersistenceService::GetPostById(int64_t post_id) {
+    for (Post& post : this->posts) {
+        if (post.post_id == post_id) {
+            return &post;
+        }
+    }
+    return nullptr;
+}
+
 void InMemoryPersistenceService::SaveAllInLocalStorage() {
     json posts_json = json::array();
     for (const auto& post : this->posts) {
@@ -97,5 +117,6 @@ EMSCRIPTEN_BINDINGS(in_memory_persistence_module) {
         .function("GetAllPosts", &InMemoryPersistenceService::GetAllPosts)
         .function("GetPostsByUserId", &InMemoryPersistenceService::GetPostsByUserId)
         .function("SaveAllInLocalStorage", &InMemoryPersistenceService::SaveAllInLocalStorage)
+        .function("DeletePost", &InMemoryPersistenceService::DeletePost)
     ;
 }
