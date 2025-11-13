@@ -12,8 +12,8 @@
 #include "../MediaHandler/MediaHandler.hpp"
 #include "../TextHandler/TextHandler.hpp"
 #include "../HomeTimelineHandler/HomeTimelineHandler.hpp"
-#include "../InMemoryPersistenceService/InMemoryPersistenceService.hpp"
 #include "../Types/Post/Post.hpp"
+#include "../PostStorageHandler/PostStorageHandler.hpp"
 #include <vector>
 
 class ComposePostHandler {
@@ -25,7 +25,7 @@ class ComposePostHandler {
             MediaHandler& mediaHandler,
             TextHandler& textHandler,
             HomeTimelineHandler& homeTimelineHandler,
-            InMemoryPersistenceService& inMemoryPersistenceService
+            PostStorageHandler& PostStorageHandler
         );
 
         Post ComposePost(
@@ -41,5 +41,5 @@ class ComposePostHandler {
         MediaHandler& mediaHandler;
         TextHandler& textHandler;
         HomeTimelineHandler& homeTimelineHandler;
-        InMemoryPersistenceService& inMemoryPersistenceService;
+        PostStorageHandler& postStorageHandler;
 };

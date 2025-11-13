@@ -17,6 +17,20 @@ json Post::toJson() const {
     j["post_type"] = "Post"; // TODO
     return j;
 }
+
+Post Post::fromJson(const json& j) {
+    Post* post = new Post();
+    post->setPostId(j["post_id"]);
+
+    Creator creator = Creator::fromJson(j["creator"]);
+    post->setCreator(creator);
+    post->setText(j["text"]);
+    post->setTimestamp(j["timestamp"].get<int>());
+    post->setPostType(PostType::POST);
+
+    return *post;
+}
+
 void Post::setPostId(int64_t _post_id) {
     this->post_id = _post_id;
 }

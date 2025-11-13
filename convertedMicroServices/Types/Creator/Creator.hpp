@@ -11,6 +11,7 @@ class Creator {
                 : user_id(0),
                 username() {
         }
+        static Creator fromJson(const json& j);
         json toJson() const;
         int64_t getUserId() const;
         void setUserId(int64_t _user_id);

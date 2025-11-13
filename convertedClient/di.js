@@ -2,7 +2,6 @@ import Module from './wasm/convertedMicroServices.js'
 
 var module = await Module();
 
-const inMemoryPersistenceService = new module.InMemoryPersistenceService();
 const uniqueIdHandler = new module.UniqueIdHandler("abc");
 const mediaHandler = new module.MediaHandler();
 const socialGraphHandler = new module.SocialGraphHandler();
@@ -12,8 +11,8 @@ const postStorageHandler = new module.PostStorageHandler();
 const userMentionHandler = new module.UserMentionHandler();
 const textHandler = new module.TextHandler(userMentionHandler);
 const userTimelineHandler = new module.UserTimelineHandler(postStorageHandler);
-const homeTimelineHandler = new module.HomeTimelineHandler(postStorageHandler, socialGraphHandler, inMemoryPersistenceService);
-const composePostHandler = new module.ComposePostHandler(userTimelineHandler, userHandler, uniqueIdHandler, mediaHandler, textHandler, homeTimelineHandler, inMemoryPersistenceService);
+const homeTimelineHandler = new module.HomeTimelineHandler(postStorageHandler, socialGraphHandler);
+const composePostHandler = new module.ComposePostHandler(userTimelineHandler, userHandler, uniqueIdHandler, mediaHandler, textHandler, homeTimelineHandler, postStorageHandler);
 
 const di = {
   uniqueIdHandler: uniqueIdHandler,
@@ -26,7 +25,6 @@ const di = {
   userTimelineHandler: userTimelineHandler,
   composePostHandler: composePostHandler,
   homeTimelineHandler: homeTimelineHandler,
-  inMemoryPersistenceService: inMemoryPersistenceService,
   sessionStorageUserService: sessionStorageUserService,
   module: module,
 }

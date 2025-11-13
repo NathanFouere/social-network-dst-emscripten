@@ -4,19 +4,16 @@
 using namespace emscripten;
 
 HomeTimelineHandler::HomeTimelineHandler(
-    PostStorageHandler& postStorageHandler, 
-    SocialGraphHandler& socialGraphHandler,
-    InMemoryPersistenceService& inMemoryPersistenceService)
-    : postStorageHandler(postStorageHandler), 
-    socialGraphHandler(socialGraphHandler), 
-    inMemoryPersistenceService(inMemoryPersistenceService) 
+    PostStorageHandler& postStorageHandler,
+    SocialGraphHandler& socialGraphHandler)
+    : postStorageHandler(postStorageHandler),
+    socialGraphHandler(socialGraphHandler)
 {};
-    
+
 std::vector<Post> HomeTimelineHandler::ReadHomeTimeline(int64_t user_id, int start_idx, int stop_idx) {
     std::cout << "ReadHomeTimeline appelé" << std::endl;
-    // TODO => il faudra ajouter un tri ici et voir utilié start et stop
-    std::vector<Post> posts = this->inMemoryPersistenceService.GetAllPosts();
-        
+    std::vector<Post> posts = this->postStorageHandler.GetPostsBetweenIdx(start_idx, stop_idx);
+
     return posts;
 };
 
@@ -26,7 +23,7 @@ void HomeTimelineHandler::WriteHomeTimeline(int64_t post_id, int64_t user_id, in
 
 EMSCRIPTEN_BINDINGS(home_timeline_module) {
     class_<HomeTimelineHandler>("HomeTimelineHandler")
-        .constructor<PostStorageHandler&, SocialGraphHandler&, InMemoryPersistenceService&>()
+        .constructor<PostStorageHandler&, SocialGraphHandler&>()
         .function("ReadHomeTimeline", &HomeTimelineHandler::ReadHomeTimeline)
         .function("WriteHomeTimeline", &HomeTimelineHandler::WriteHomeTimeline);
 }

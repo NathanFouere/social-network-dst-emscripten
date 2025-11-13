@@ -10,14 +10,14 @@ ComposePostHandler::ComposePostHandler(
     MediaHandler& mediaHandler,
     TextHandler& textHandler,
     HomeTimelineHandler& homeTimelineHandler,
-    InMemoryPersistenceService& inMemoryPersistenceService
+    PostStorageHandler& postStorageHandler
 ) : userTimelineHandler(userTimelineHandler),
     userHandler(userHandler),
     uniqueIdHandler(uniqueIdHandler),
     mediaHandler(mediaHandler),
     textHandler(textHandler),
     homeTimelineHandler(homeTimelineHandler),
-    inMemoryPersistenceService(inMemoryPersistenceService)
+    postStorageHandler(postStorageHandler)
 {}
 
 Post ComposePostHandler::ComposePost(
@@ -38,7 +38,7 @@ Post ComposePostHandler::ComposePost(
     time(&timestamp);
     post->setTimestamp(timestamp);
     
-    this->inMemoryPersistenceService.SavePost(*post);
+    this->postStorageHandler.StorePost(*post);
     return *post;
 }
 
@@ -51,7 +51,7 @@ EMSCRIPTEN_BINDINGS(compose_post_handler) {
             MediaHandler&,
             TextHandler&,
             HomeTimelineHandler&,
-            InMemoryPersistenceService&
+            PostStorageHandler&
         >()
         .function("ComposePost", &ComposePostHandler::ComposePost)
     ;

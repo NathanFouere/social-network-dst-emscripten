@@ -17,7 +17,7 @@ class Post {
   public:
     Post() noexcept
       : post_id(0), creator(), text(), timestamp(0), post_type(PostType::POST) {}
-      
+    static Post fromJson(const json& j);
     json toJson() const;
 
     int64_t getPostId() const;
