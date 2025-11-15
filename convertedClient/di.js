@@ -2,17 +2,18 @@ import Module from './wasm/convertedMicroServices.js'
 
 var module = await Module();
 
-const uniqueIdHandler = new module.UniqueIdHandler("abc");
-const mediaHandler = new module.MediaHandler();
-const socialGraphHandler = new module.SocialGraphHandler();
-const sessionStorageUserService = new module.SessionStorageUserService();
-const userHandler = new module.UserHandler(socialGraphHandler, uniqueIdHandler, sessionStorageUserService);
-const postStorageHandler = new module.PostStorageHandler();
-const userMentionHandler = new module.UserMentionHandler();
-const textHandler = new module.TextHandler(userMentionHandler);
-const userTimelineHandler = new module.UserTimelineHandler(postStorageHandler);
-const homeTimelineHandler = new module.HomeTimelineHandler(postStorageHandler, socialGraphHandler);
-const composePostHandler = new module.ComposePostHandler(userTimelineHandler, userHandler, uniqueIdHandler, mediaHandler, textHandler, homeTimelineHandler, postStorageHandler);
+// TODO => tout regrouper dans un promise.all
+const uniqueIdHandler = await new module.UniqueIdHandler("abc");
+const mediaHandler = await new module.MediaHandler();
+const socialGraphHandler = await new module.SocialGraphHandler();
+const sessionStorageUserService = await new module.SessionStorageUserService();
+const userHandler = await new module.UserHandler(socialGraphHandler, uniqueIdHandler, sessionStorageUserService);
+const postStorageHandler = await new module.PostStorageHandler();
+const userMentionHandler = await new module.UserMentionHandler();
+const textHandler = await new module.TextHandler(userMentionHandler);
+const userTimelineHandler = await new module.UserTimelineHandler(postStorageHandler);
+const homeTimelineHandler = await new module.HomeTimelineHandler(postStorageHandler, socialGraphHandler);
+const composePostHandler = await new module.ComposePostHandler(userTimelineHandler, userHandler, uniqueIdHandler, mediaHandler, textHandler, homeTimelineHandler, postStorageHandler);
 
 const di = {
   uniqueIdHandler: uniqueIdHandler,

@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 3.13)
 project(convertedMicroServices)
 
 # Pour aller chercher les packages seulement dans l'env du shell nix (voire https://cmake.org/cmake/help/latest/variable/CMAKE_FIND_ROOT_PATH_MODE_PACKAGE.html)
-set(CMAKE_FIND_ROOT_PATH_MODE_PACKAGE NONE) 
+set(CMAKE_FIND_ROOT_PATH_MODE_PACKAGE NONE)
 
 find_package(nlohmann_json REQUIRED)
 
@@ -41,6 +41,6 @@ target_link_libraries(
 
 if(CMAKE_SYSTEM_NAME MATCHES "Emscripten")
     set_target_properties(convertedMicroServices PROPERTIES
-        LINK_FLAGS "--bind -sALLOW_MEMORY_GROWTH=1 -sMODULARIZE=1 -sEXPORT_ES6=1 -sEXPORTED_RUNTIME_METHODS=[\\\"stringToNewUTF8\\\"]"
+        LINK_FLAGS "--bind -sALLOW_MEMORY_GROWTH=1 -sMODULARIZE=1 -sASYNCIFY -sEXPORT_ES6=1 -sEXPORTED_RUNTIME_METHODS=[\\\"stringToNewUTF8\\\"]"
     )
 endif()

@@ -9,39 +9,119 @@ using namespace emscripten;
 using nlohmann::json;
 
 
-EM_JS(void, save_posts_in_local_storage, (const char* posts_json_cstr), {
-    const posts_json_utf_8 = UTF8ToString(posts_json_cstr);
-    console.log("Saving all to local storage ...");
+EM_ASYNC_JS(void, edit_post_in_indexed_db, (const char* post_json_cstr), {
+    const post_json_utf_8 = UTF8ToString(post_json_cstr);
 
-    console.log("Saving all posts ...", JSON.parse(posts_json_utf_8));
-    localStorage.setItem('posts', posts_json_utf_8);
-    console.log("All posts saved to local storage.");
+    const db = await new Promise((resolve, reject) => {
+        const openRequest = indexedDB.open("store");
 
-    console.log("Saved successfully !");
+        openRequest.onsuccess = () => resolve(openRequest.result);
+        openRequest.onerror  = () => reject(openRequest.error);
+    });
+
+    await new Promise((resolve, reject) => {
+        let transaction = db.transaction("posts", "readwrite");
+        let posts = transaction.objectStore("posts");
+        let request = posts.put(JSON.parse(post_json_utf_8));
+    });
 });
 
-EM_JS(char*, get_posts_from_local_storage_js, (), {
-   console.log("Loading posts from local storage");
 
-   const posts_json_str = localStorage.getItem('posts');
-   console.log(posts_json_str);
-   console.log("Loaded posts successfully !", posts_json_str);
-   if(null == posts_json_str) {
-       return null;
-   }
-   return stringToNewUTF8(posts_json_str);
+EM_ASYNC_JS(void, delete_post_in_indexed_db, (int64_t post_id), {
+    const db = await new Promise((resolve, reject) => {
+        const openRequest = indexedDB.open("store");
+
+        openRequest.onsuccess = () => resolve(openRequest.result);
+        openRequest.onerror  = () => reject(openRequest.error);
+    });
+
+    await new Promise((resolve, reject) => {
+        let transaction = db.transaction("posts", "readwrite");
+        let posts = transaction.objectStore("posts");
+        let request = posts.delete(Number(post_id)); // oblider de faire la conversion à cause de big int
+    });
 });
+
+EM_ASYNC_JS(char*, get_posts_from_indexed_db, (), {
+   const db = await new Promise((resolve, reject) => {
+       const openRequest = indexedDB.open("store");
+
+       openRequest.onsuccess = () => resolve(openRequest.result);
+       openRequest.onerror  = () => reject(openRequest.error);
+   });
+
+   const allPosts = await new Promise((resolve, reject) => {
+       const transaction = db.transaction("posts", "readonly");
+       const store = transaction.objectStore("posts");
+       const req = store.getAll();
+
+       req.onsuccess = () => resolve(req.result);
+       req.onerror   = () => reject(req.error);
+   });
+
+   console.log("IndexedDB posts:", JSON.stringify(allPosts));
+
+   return stringToNewUTF8(JSON.stringify(allPosts));
+});
+
+EM_ASYNC_JS(void, create_posts_structure_in_indexed_db, (), {
+    const db = await new Promise((resolve, reject) => {
+        const openRequest = indexedDB.open("store", 5); // 5 indique la version, il faut voir pour pas la mettre en dur comme un schlag
+        openRequest.onsuccess = () => resolve(openRequest.result);
+        openRequest.onerror  = () => reject(openRequest.error);
+        openRequest.onupgradeneeded = function() {
+            let db = openRequest.result;
+            if (!db.objectStoreNames.contains('posts')) {
+              const postsObjectStore = db.createObjectStore('posts', {keyPath: 'post_id'});
+              postsObjectStore.createIndex("post_id", "post_id", { unique: true });
+              postsObjectStore.createIndex("creator", "creator", { unique: false } );
+              postsObjectStore.createIndex("text", "text", { unique: false });
+              postsObjectStore.createIndex("timestamp", "timestamp", { unique: false });
+              postsObjectStore.createIndex("post_type", "post_type", { unique: false });
+            }
+        };
+    });
+
+    const allPosts = await new Promise((resolve, reject) => {
+        const transaction = db.transaction("posts", "readonly");
+        const store = transaction.objectStore("posts");
+        const req = store.getAll();
+
+        req.onsuccess = () => resolve(req.result);
+        req.onerror   = () => reject(req.error);
+    });
+});
+
+EM_ASYNC_JS(void, save_post_in_indexed_db, (const char* post_json_cstr), {
+    console.log("debut save post in indexeddb");
+    const post_json_utf_8 = UTF8ToString(post_json_cstr);
+
+    const db = await new Promise((resolve, reject) => {
+        const openRequest = indexedDB.open("store");
+
+        openRequest.onsuccess = () => resolve(openRequest.result);
+        openRequest.onerror  = () => reject(openRequest.error);
+    });
+
+    await new Promise((resolve, reject) => {
+        let transaction = db.transaction("posts", "readwrite");
+        let posts = transaction.objectStore("posts");
+        let request = posts.add(JSON.parse(post_json_utf_8));
+    });
+    console.log("fin save post in indexeddb");
+});
+
+
 
 PostStorageHandler::PostStorageHandler() {
-   // charge tous les posts depuis le local storage lors de l'initialisation du service
-   auto postsFromLocalStorage = get_posts_from_local_storage_js();
-   if (postsFromLocalStorage != nullptr) {
+   // charge tous les posts depuis indexed db lors de l'initialisation du service
+   auto postsFromIndexedDb = get_posts_from_indexed_db();
+   if (postsFromIndexedDb != nullptr) {
        json postsJson = json::parse(postsFromLocalStorage);
        for (json postJson: postsJson) {
            this->posts.push_back(Post::fromJson(postJson));
        }
    }
-
 }
 
 std::vector<Post> PostStorageHandler::GetPostsBetweenIdx(int start_idx, int stop_idx) const {
@@ -64,7 +144,7 @@ void PostStorageHandler::EditPostText(int64_t post_id, std::string newText) {
     for (std::size_t i = 0; i < posts.size(); i++) {
         if (this->posts[i].post_id == post_id) {
             this->posts[i].setText(newText);
-            this->SaveAllInLocalStorage();
+            edit_post_in_indexed_db(this->posts[i].toJson().dump().c_str());
             return;
         }
     }
@@ -73,8 +153,10 @@ void PostStorageHandler::EditPostText(int64_t post_id, std::string newText) {
 void PostStorageHandler::DeletePost(int64_t post_id) {
     for (std::size_t i = 0; i < posts.size(); i++) {
         if (this->posts[i].post_id == post_id) {
+            std::cout << "delete_post_in_indexed_db" << "   " << this->posts[i].post_id << std::endl;
+
+            delete_post_in_indexed_db(this->posts[i].post_id);
             this->posts.erase(this->posts.begin() + i);
-            this->SaveAllInLocalStorage();
             return;
         }
     }
@@ -89,17 +171,9 @@ Post* PostStorageHandler::GetPostById(int64_t post_id) {
     return nullptr;
 }
 
-void PostStorageHandler::SaveAllInLocalStorage() {
-    json posts_json = json::array();
-    for (const auto& post : this->posts) {
-        posts_json.push_back(post.toJson());
-    }
-    save_posts_in_local_storage(posts_json.dump().c_str());
-}
-
 void PostStorageHandler::StorePost(const Post &post) {
     this->posts.push_back(post);
-    this->SaveAllInLocalStorage();
+    save_post_in_indexed_db(post.toJson().dump().c_str());
 }
 
 Post* PostStorageHandler::ReadPost(int64_t post_id) {
