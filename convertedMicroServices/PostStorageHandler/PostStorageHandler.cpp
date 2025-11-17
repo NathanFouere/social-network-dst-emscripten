@@ -117,7 +117,7 @@ PostStorageHandler::PostStorageHandler() {
    // charge tous les posts depuis indexed db lors de l'initialisation du service
    auto postsFromIndexedDb = get_posts_from_indexed_db();
    if (postsFromIndexedDb != nullptr) {
-       json postsJson = json::parse(postsFromLocalStorage);
+       json postsJson = json::parse(postsFromIndexedDb);
        for (json postJson: postsJson) {
            this->posts.push_back(Post::fromJson(postJson));
        }
