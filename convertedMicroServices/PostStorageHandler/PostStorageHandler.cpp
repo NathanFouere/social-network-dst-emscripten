@@ -66,7 +66,7 @@ EM_ASYNC_JS(char*, get_posts_from_indexed_db, (), {
 
 EM_ASYNC_JS(void, create_posts_structure_in_indexed_db, (), {
     const db = await new Promise((resolve, reject) => {
-        const openRequest = indexedDB.open("store", 5); // 5 indique la version, il faut voir pour pas la mettre en dur comme un schlag
+        const openRequest = indexedDB.open("store", 6); // 5 indique la version, il faut voir pour pas la mettre en dur comme un schlag
         openRequest.onsuccess = () => resolve(openRequest.result);
         openRequest.onerror  = () => reject(openRequest.error);
         openRequest.onupgradeneeded = function() {
@@ -115,6 +115,7 @@ EM_ASYNC_JS(void, save_post_in_indexed_db, (const char* post_json_cstr), {
 
 PostStorageHandler::PostStorageHandler() {
    // charge tous les posts depuis indexed db lors de l'initialisation du service
+   create_posts_structure_in_indexed_db();
    auto postsFromIndexedDb = get_posts_from_indexed_db();
    if (postsFromIndexedDb != nullptr) {
        json postsJson = json::parse(postsFromIndexedDb);
