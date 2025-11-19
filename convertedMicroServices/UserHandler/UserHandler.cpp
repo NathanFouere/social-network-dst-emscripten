@@ -8,8 +8,12 @@ using namespace emscripten;
 
 UserHandler::UserHandler(
     SocialGraphHandler& socialGraphHandler,
-    UniqueIdHandler& uniqueIdHandler
-): socialGraphHandler(socialGraphHandler), uniqueIdHandler(uniqueIdHandler) {
+    UniqueIdHandler& uniqueIdHandler,
+    SessionStorageUserService& sessionStorageUserService
+): 
+    socialGraphHandler(socialGraphHandler),
+    uniqueIdHandler(uniqueIdHandler), 
+    sessionStrageUserService(sessionStorageUserService) {
 }
 
 
@@ -69,13 +73,18 @@ bool UserHandler::Login(
 ) {
     std::cout << "UserHandler donné with username: " << username << std::endl;
 
-    //
+    User* user = new User(
+        1, // TODO tmp
+        username, // TODO tmp
+        username, // TODO tmp
+        username, // TODO tmp
+        username, // TODO tmp
+        username // TODO tmp
+    );
 
-    if (username == "test" && password == "test") {
-        return true;
-    }
-
-    return false;
+    // TODO => pour le moment on le met directement dans session storage, devra appeler le service d'authent
+    this->sessionStrageUserService.setLoggedUser(*user);
+    return true;
 }
 
 // Dans le UserHandler original, renvoie le user id correspondant au username
@@ -88,7 +97,7 @@ int64_t UserHandler::GetUserId(
 
 EMSCRIPTEN_BINDINGS(user_handler_module) {
     class_<UserHandler>("UserHandler")
-    .constructor<SocialGraphHandler&, UniqueIdHandler&>()
+    .constructor<SocialGraphHandler&, UniqueIdHandler&, SessionStorageUserService&>()
     .function("RegisterUserWithId", &UserHandler::RegisterUserWithId)
     .function("ComposeCreatorWithUserId", &UserHandler::ComposeCreatorWithUserId)
     .function("ComposeCreatorWithUsername", &UserHandler::ComposeCreatorWithUsername)

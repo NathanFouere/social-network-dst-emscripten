@@ -1,3 +1,6 @@
+#pragma once
+#include <string>
+
 struct PostType {
   enum type {
     POST = 0,

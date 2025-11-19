@@ -2,17 +2,18 @@ import Module from './wasm/convertedMicroServices.js'
 
 var module = await Module();
 
-const uniqueIdHandler = new module.UniqueIdHandler("abc");
-const mediaHandler = new module.MediaHandler();
-const socialGraphHandler = new module.SocialGraphHandler();
-const userHandler = new module.UserHandler(socialGraphHandler, uniqueIdHandler);
-const postStorageHandler = new module.PostStorageHandler();
-const userMentionHandler = new module.UserMentionHandler();
-const urlShortenHandler = new module.UrlShortenHandler();
-const textHandler = new module.TextHandler(urlShortenHandler, userMentionHandler);
-const userTimelineHandler = new module.UserTimelineHandler(postStorageHandler);
-const homeTimelineHandler = new module.HomeTimelineHandler(postStorageHandler, socialGraphHandler);
-const composePostHandler = new module.ComposePostHandler(userTimelineHandler, userHandler, uniqueIdHandler, mediaHandler, textHandler, homeTimelineHandler);
+// TODO => tout regrouper dans un promise.all
+const uniqueIdHandler = await new module.UniqueIdHandler("abc");
+const mediaHandler = await new module.MediaHandler();
+const socialGraphHandler = await new module.SocialGraphHandler();
+const sessionStorageUserService = await new module.SessionStorageUserService();
+const userHandler = await new module.UserHandler(socialGraphHandler, uniqueIdHandler, sessionStorageUserService);
+const postStorageHandler = await new module.PostStorageHandler();
+const userMentionHandler = await new module.UserMentionHandler();
+const textHandler = await new module.TextHandler(userMentionHandler);
+const userTimelineHandler = await new module.UserTimelineHandler(postStorageHandler);
+const homeTimelineHandler = await new module.HomeTimelineHandler(postStorageHandler, socialGraphHandler);
+const composePostHandler = await new module.ComposePostHandler(userTimelineHandler, userHandler, uniqueIdHandler, mediaHandler, textHandler, homeTimelineHandler, postStorageHandler);
 
 const di = {
   uniqueIdHandler: uniqueIdHandler,
@@ -21,11 +22,11 @@ const di = {
   userHandler: userHandler,
   postStorageHandler: postStorageHandler,
   userMentionHandler: userMentionHandler,
-  urlShortenHandler: urlShortenHandler,
   textHandler: textHandler,
   userTimelineHandler: userTimelineHandler,
   composePostHandler: composePostHandler,
   homeTimelineHandler: homeTimelineHandler,
+  sessionStorageUserService: sessionStorageUserService,
   module: module,
 }
 

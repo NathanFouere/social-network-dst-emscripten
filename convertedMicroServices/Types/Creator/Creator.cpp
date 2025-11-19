@@ -3,6 +3,13 @@
 
 using namespace emscripten;
 
+Creator Creator::fromJson(const json& j) {
+    Creator c;
+    c.setUserId(j.at("user_id").get<int64_t>());
+    c.setUsername(j.at("username").get<std::string>());
+    return c;
+}
+
 int64_t Creator::getUserId() const {
     return this->user_id;
 }
@@ -17,6 +24,13 @@ std::string Creator::getUsername() const {
 
 void Creator::setUsername(std::string _username) {
     this->username = _username;
+}
+
+json Creator::toJson() const {
+    json j;
+    j["user_id"] = user_id;
+    j["username"] = username;
+    return j;
 }
 
 EMSCRIPTEN_BINDINGS(creator_module) {

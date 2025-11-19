@@ -4,16 +4,17 @@
 using namespace emscripten;
 
 HomeTimelineHandler::HomeTimelineHandler(
-    PostStorageHandler& postStorageHandler, SocialGraphHandler& socialGraphHandler)
-    : postStorageHandler(postStorageHandler), socialGraphHandler(socialGraphHandler) {};
-    
+    PostStorageHandler& postStorageHandler,
+    SocialGraphHandler& socialGraphHandler)
+    : postStorageHandler(postStorageHandler),
+    socialGraphHandler(socialGraphHandler)
+{};
+
 std::vector<Post> HomeTimelineHandler::ReadHomeTimeline(int64_t user_id, int start_idx, int stop_idx) {
     std::cout << "ReadHomeTimeline appelé" << std::endl;
-    Post* fakePost = new Post();
-    
-    std::vector<Post> fakePosts = { *fakePost };
-    
-    return fakePosts;
+    std::vector<Post> posts = this->postStorageHandler.GetPostsBetweenIdx(start_idx, stop_idx);
+
+    return posts;
 };
 
 void HomeTimelineHandler::WriteHomeTimeline(int64_t post_id, int64_t user_id, int64_t timestamp, const std::vector<int64_t>& user_mentions_id) {
