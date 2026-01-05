@@ -1,0 +1,5 @@
+{
+  "dependencies": {
+    "y-webrtc": "^10.3.0"
+  }
+}
