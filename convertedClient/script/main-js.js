@@ -1,4 +1,4 @@
-import di from '../../di.js'
+import di from "../di.js";
 
 function followHandler(event) {
   event.preventDefault();
@@ -9,11 +9,10 @@ function followHandler(event) {
   const follweeeName = formData.get("followee_name");
   const username = formData.get("user_name");
 
-  window.location.href = "../contact/contact.html"
+  window.location.href = "../contact/contact.html";
   di.socialGraphHandler.FollowWithUsername(username, follweeeName);
 }
 
-
-document.querySelectorAll('.follow-form').forEach(f => {
-  f.addEventListener('submit', followHandler);
+document.querySelectorAll(".follow-form").forEach((f) => {
+  f.addEventListener("submit", followHandler);
 });
