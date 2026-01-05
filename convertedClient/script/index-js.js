@@ -1,4 +1,4 @@
-import di from '../../di.js'
+import di from "../di.js";
 
 function loginHandler(event) {
   event.preventDefault();
@@ -9,8 +9,8 @@ function loginHandler(event) {
   const loginResponse = di.userHandler.Login(usernameInput, passwordInput);
 
   if (loginResponse == true) {
-    console.log("Success")
-    window.location.href = "../main/main.html"
+    console.log("Success");
+    window.location.href = "../src/main.html";
   } else {
     console.error("error while logging in");
   }
@@ -18,4 +18,4 @@ function loginHandler(event) {
 
 const loginForm = document.getElementById("userform");
 
-loginForm.addEventListener("submit", loginHandler)
+loginForm.addEventListener("submit", loginHandler);
