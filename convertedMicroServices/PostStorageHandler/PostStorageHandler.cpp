@@ -11,111 +11,59 @@ using nlohmann::json;
 
 EM_ASYNC_JS(void, edit_post_in_indexed_db, (const char* post_json_cstr), {
     const post_json_utf_8 = UTF8ToString(post_json_cstr);
+    const updatedPost = JSON.parse(post_json_utf_8);
+    console.log(updatedPost);
 
-    const db = await new Promise((resolve, reject) => {
-        const openRequest = indexedDB.open("store");
+    const postsArray = Module.ydoc.getArray("posts");
+    let idxOfPost = null;
+    for (let i = 0; i < postsArray.length; i++) {
+        if(postsArray.get(i).post_id == Number(updatedPost.post_id)) { // oblider de faire la conversion à cause de big int
+            idxOfPost = i;
+            break;
+        }
+    }
 
-        openRequest.onsuccess = () => resolve(openRequest.result);
-        openRequest.onerror  = () => reject(openRequest.error);
-    });
+    // cf . https://discuss.yjs.dev/t/changing-a-value-of-an-element-in-yarray/1248
 
-    await new Promise((resolve, reject) => {
-        let transaction = db.transaction("posts", "readwrite");
-        let posts = transaction.objectStore("posts");
-        let request = posts.put(JSON.parse(post_json_utf_8));
-    });
+    if(null !== idxOfPost) {
+        postsArray.delete(idxOfPost);
+        postsArray.insert(idxOfPost, [updatedPost]);
+    }
 });
 
 
 EM_ASYNC_JS(void, delete_post_in_indexed_db, (int64_t post_id), {
-    const db = await new Promise((resolve, reject) => {
-        const openRequest = indexedDB.open("store");
+    const postsArray = Module.ydoc.getArray("posts");
+    let idxOfPost = null;
+    for (let i = 0; i < postsArray.length; i++) {
+        if(postsArray.get(i).post_id == Number(post_id)) { // oblider de faire la conversion à cause de big int
+            idxOfPost = i;
+            break;
+        }
+    }
 
-        openRequest.onsuccess = () => resolve(openRequest.result);
-        openRequest.onerror  = () => reject(openRequest.error);
-    });
-
-    await new Promise((resolve, reject) => {
-        let transaction = db.transaction("posts", "readwrite");
-        let posts = transaction.objectStore("posts");
-        let request = posts.delete(Number(post_id)); // oblider de faire la conversion à cause de big int
-    });
+    if(null !== idxOfPost) {
+        postsArray.delete(idxOfPost)
+    }
 });
 
 EM_ASYNC_JS(char*, get_posts_from_indexed_db, (), {
-   const db = await new Promise((resolve, reject) => {
-       const openRequest = indexedDB.open("store");
+   const postsArray = Module.ydoc.getArray("posts");
 
-       openRequest.onsuccess = () => resolve(openRequest.result);
-       openRequest.onerror  = () => reject(openRequest.error);
-   });
-
-   const allPosts = await new Promise((resolve, reject) => {
-       const transaction = db.transaction("posts", "readonly");
-       const store = transaction.objectStore("posts");
-       const req = store.getAll();
-
-       req.onsuccess = () => resolve(req.result);
-       req.onerror   = () => reject(req.error);
-   });
-
-   console.log("IndexedDB posts:", JSON.stringify(allPosts));
+   const allPosts = postsArray;
 
    return stringToNewUTF8(JSON.stringify(allPosts));
 });
 
-EM_ASYNC_JS(void, create_posts_structure_in_indexed_db, (), {
-    const db = await new Promise((resolve, reject) => {
-        const openRequest = indexedDB.open("store", 6); // 5 indique la version, il faut voir pour pas la mettre en dur comme un schlag
-        openRequest.onsuccess = () => resolve(openRequest.result);
-        openRequest.onerror  = () => reject(openRequest.error);
-        openRequest.onupgradeneeded = function() {
-            let db = openRequest.result;
-            if (!db.objectStoreNames.contains('posts')) {
-              const postsObjectStore = db.createObjectStore('posts', {keyPath: 'post_id'});
-              postsObjectStore.createIndex("post_id", "post_id", { unique: true });
-              postsObjectStore.createIndex("creator", "creator", { unique: false } );
-              postsObjectStore.createIndex("text", "text", { unique: false });
-              postsObjectStore.createIndex("timestamp", "timestamp", { unique: false });
-              postsObjectStore.createIndex("post_type", "post_type", { unique: false });
-            }
-        };
-    });
-
-    const allPosts = await new Promise((resolve, reject) => {
-        const transaction = db.transaction("posts", "readonly");
-        const store = transaction.objectStore("posts");
-        const req = store.getAll();
-
-        req.onsuccess = () => resolve(req.result);
-        req.onerror   = () => reject(req.error);
-    });
-});
-
 EM_ASYNC_JS(void, save_post_in_indexed_db, (const char* post_json_cstr), {
     console.log("debut save post in indexeddb");
+    const postsArray = Module.ydoc.getArray("posts");
     const post_json_utf_8 = UTF8ToString(post_json_cstr);
-
-    const db = await new Promise((resolve, reject) => {
-        const openRequest = indexedDB.open("store");
-
-        openRequest.onsuccess = () => resolve(openRequest.result);
-        openRequest.onerror  = () => reject(openRequest.error);
-    });
-
-    await new Promise((resolve, reject) => {
-        let transaction = db.transaction("posts", "readwrite");
-        let posts = transaction.objectStore("posts");
-        let request = posts.add(JSON.parse(post_json_utf_8));
-    });
-    console.log("fin save post in indexeddb");
+    const post = JSON.parse(post_json_utf_8);
+    postsArray.push([post]);
 });
 
-
-
 PostStorageHandler::PostStorageHandler() {
-   // charge tous les posts depuis indexed db lors de l'initialisation du service
-   create_posts_structure_in_indexed_db();
    auto postsFromIndexedDb = get_posts_from_indexed_db();
    if (postsFromIndexedDb != nullptr) {
        json postsJson = json::parse(postsFromIndexedDb);
