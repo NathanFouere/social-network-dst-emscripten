@@ -1,45 +1,87 @@
 import di from '../di.js'
 
+let postTemplate = null;
+
 export default function showTimeline(type) {
   const loggedUser = di.sessionStorageUserService.getLoggedUser();
 
-    if(type == "main") {
-    const posts = di.homeTimelineHandler.ReadHomeTimeline(loggedUser.userid, 0, 10);
+  if (type == "main") {
+    const cardBlock = document.getElementById("card-block");
+    if (!cardBlock) return;
 
-    const post_cards = document.getElementsByClassName("post-card");
-    const post_texts = document.getElementsByClassName("post-text");
-    const post_times = document.getElementsByClassName("post-time");
-    const post_creators = document.getElementsByClassName("post-creator");
-    const post_deletes_button = document.getElementsByClassName("delete-post-btn");
-    const post_edits_button = document.getElementsByClassName("edit-post-btn");
+    // Use cached template
+    if (!postTemplate) return;
+
+    const onlyFriendsToggle = document.getElementById('only-friends-toggle');
+    const onlyFriends = onlyFriendsToggle ? onlyFriendsToggle.checked : false;
+
+    // Fetch posts (synchronous for now based on current impl)
+    const posts = di.homeTimelineHandler.ReadHomeTimeline(loggedUser.userid, 0, 10, onlyFriends);
+
+    // Clear current posts
+    cardBlock.innerHTML = "";
 
     for (var i = 0; i < posts.size(); i++) {
-
-      if (i == post_cards.length - 1) {
-          var itm = post_cards[i];
-          var cln = itm.cloneNode(true); //clone the post_card[i]
-          document.getElementById("card-block").appendChild(cln);
-      }
-
       const p = posts.get(i);
       const date = new Date(Number(p.timestamp) * 1000);
 
-      post_cards[i].style.display = "block";
-      post_texts[i].innerText = p.text;
-      post_times[i].innerText = date.toString();
-      post_creators[i].innerText = p.creator.username;
+      const clone = postTemplate.cloneNode(true);
+      clone.style.display = "block";
 
-      post_deletes_button[i].onclick = () => {
-        di.postStorageHandler.DeletePost(p.post_id);
-        window.location.reload();
-      };
+      // Fill data
+      clone.querySelector(".post-text").innerText = p.text;
+      clone.querySelector(".post-time").innerText = date.toString();
 
-      post_edits_button[i].onclick = () => {
-        di.postStorageHandler.EditPostText(p.post_id, "edited post");
-        window.location.reload();
-      };
+      const creatorEl = clone.querySelector(".post-creator");
+      if (creatorEl) creatorEl.innerText = p.creator.username;
+
+      // Hook buttons
+      const deleteBtn = clone.querySelector(".delete-post-btn");
+      if (deleteBtn) {
+        deleteBtn.onclick = () => {
+          di.postStorageHandler.DeletePost(p.post_id);
+          showTimeline("main"); // Refresh without reload
+        };
+      }
+
+      const editBtn = clone.querySelector(".edit-post-btn");
+      if (editBtn) {
+        editBtn.onclick = () => {
+          di.postStorageHandler.EditPostText(p.post_id, "edited post");
+          showTimeline("main"); // Refresh without reload
+        };
+      }
+
+      cardBlock.appendChild(clone);
     }
   }
 }
 
-showTimeline("main");
+// Global exposure
+window.showTimeline = showTimeline;
+
+function initTimeline() {
+  const allCards = document.getElementsByClassName("post-card");
+  if (allCards.length > 0) {
+    console.log("timeline.js: Template captured.");
+    postTemplate = allCards[0].cloneNode(true);
+    allCards[0].remove();
+  } else {
+    console.error("timeline.js: No post-card template found!");
+  }
+
+  showTimeline("main");
+
+  const toggle = document.getElementById('only-friends-toggle');
+  if (toggle) {
+    toggle.addEventListener('change', () => {
+      showTimeline("main");
+    });
+  }
+}
+
+if (document.readyState === "loading") {
+  document.addEventListener("DOMContentLoaded", initTimeline);
+} else {
+  initTimeline();
+}

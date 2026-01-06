@@ -2,6 +2,43 @@
 
 Il faut lancer le script build-for-client avec la commande `./build-for-client.sh`
 
+### Compilation sur macOS (sans Nix)
+
+Si vous êtes sur macOS et souhaitez compiler sans utiliser Nix, suivez ces étapes :
+
+1.  **Installer les dépendances** avec Homebrew :
+    ```bash
+    brew install emscripten cmake nlohmann-json
+    ```
+
+2.  **Nettoyer les anciens fichiers de build** (si nécessaire) :
+    Allez dans le répertoire `convertedMicroServices` et supprimez le cache CMake :
+    ```bash
+    cd convertedMicroServices
+    rm -rf CMakeCache.txt CMakeFiles
+    ```
+
+3.  **Compiler le projet** :
+    Utilisez `emcmake` pour configurer le projet avec la toolchain Emscripten, puis lancez la compilation :
+    ```bash
+    emcmake cmake .
+    make
+    ```
+
+Une fois terminé :
+
+1.  **Lancer le serveur WebSocket** :
+    Allez dans le répertoire `ws-server` et lancez :
+    ```bash
+    PORT=4444 node server.js
+    ```
+
+2.  **Lancer le client** :
+    Dans le dossier `convertedClient`, lancez :
+    ```bash
+    npm run dev
+    ```
+
 ## Emscripten
 
 Emscripten est un compilateur source à source open source permettant de compiler du bitcode LLVM en asm.js, qui peut être exécuté par les navigateurs web.
