@@ -60,25 +60,18 @@ export default function showTimeline(type) {
 // Global exposure
 window.showTimeline = showTimeline;
 
-// Global exposure
-window.showTimeline = showTimeline;
-
 function initTimeline() {
-  // 1. Capture Template
   const allCards = document.getElementsByClassName("post-card");
   if (allCards.length > 0) {
     console.log("timeline.js: Template captured.");
     postTemplate = allCards[0].cloneNode(true);
-    // Remove the dummy/template from DOM so we start fresh
     allCards[0].remove();
   } else {
     console.error("timeline.js: No post-card template found!");
   }
 
-  // 2. Initial Render
   showTimeline("main");
 
-  // 3. Listener
   const toggle = document.getElementById('only-friends-toggle');
   if (toggle) {
     toggle.addEventListener('change', () => {

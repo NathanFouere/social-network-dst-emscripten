@@ -78,60 +78,6 @@ PostStorageHandler::PostStorageHandler() {
     std::cout << "PostStorageHandler: DB returned nullptr (empty)."
               << std::endl;
   }
-
-  // Inject Fake Data if empty
-  // Ensure Fake Data always exists
-  std::vector<int64_t> fake_ids = {101, 102, 103, 104};
-  bool missing_any = false;
-  for (int64_t id : fake_ids) {
-    bool found = false;
-    for (const auto &p : this->posts) {
-      if (p.post_id == id) {
-        found = true;
-        break;
-      }
-    }
-    if (!found) {
-      missing_any = true;
-      break;
-    }
-  }
-
-  if (missing_any) {
-    std::cout << "Injecting missing fake posts..." << std::endl;
-
-    auto checkAndInsert = [&](int64_t pid, int64_t uid, std::string uname,
-                              std::string content, int64_t ts) {
-      bool exists = false;
-      for (const auto &p : this->posts) {
-        if (p.post_id == pid) {
-          exists = true;
-          break;
-        }
-      }
-      if (!exists) {
-        Creator c;
-        c.user_id = uid;
-        c.username = uname;
-        Post p;
-        p.post_id = pid;
-        p.timestamp = ts;
-        p.text = content;
-        p.creator = c;
-        StorePost(p);
-      }
-    };
-
-    checkAndInsert(101, 1001, "mark", "Hello from Mark Zuckerberg! #meta",
-                   1677649200);
-    checkAndInsert(102, 1002, "elon",
-                   "Just launched a rocket. Mars soon. #spacex", 1677652800);
-    checkAndInsert(
-        103, 3, "stranger_user",
-        "I am a stranger. You should not see this if filtering works.",
-        1677660000);
-    checkAndInsert(104, 1, "user", "This is my own post.", 1677663600);
-  }
 }
 
 std::vector<Post> PostStorageHandler::GetPostsBetweenIdx(int start_idx,
