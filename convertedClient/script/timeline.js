@@ -1,45 +1,46 @@
 import di from '../di.js'
 
+let postTemplate = null;
+
 export default function showTimeline(type) {
   const loggedUser = di.sessionStorageUserService.getLoggedUser();
 
   if (type == "main") {
-    const onlyFriends = document.getElementById('only-friends-toggle').checked;
+    const cardBlock = document.getElementById("card-block");
+    if (!cardBlock) return;
+
+    // Use cached template
+    if (!postTemplate) return;
+
+    const onlyFriendsToggle = document.getElementById('only-friends-toggle');
+    const onlyFriends = onlyFriendsToggle ? onlyFriendsToggle.checked : false;
+
+    // Fetch posts (synchronous for now based on current impl)
     const posts = di.homeTimelineHandler.ReadHomeTimeline(loggedUser.userid, 0, 10, onlyFriends);
 
-    const cardBlock = document.getElementById("card-block");
-    // Find the template card. 
-    // Careful: if we ran this before, there might be multiple cards. 
-    // We assume the first one is the template or we kept a reference.
-    // For simplicity in this existing codebase, let's assume the first .post-card is our template.
-    const allCards = document.getElementsByClassName("post-card");
-    if (allCards.length === 0) return; // No template found
-
-    const template = allCards[0].cloneNode(true);
-
-    // Clear the container but we must ensure we don't lose the ability to clone if we clear everything.
-    // Actually, simpler approach: Remove all *except* the first one, then hide the first one, then append new ones?
-    // OR: clone the template, clear innerHTML, then append new ones. 
+    // Clear current posts
     cardBlock.innerHTML = "";
 
     for (var i = 0; i < posts.size(); i++) {
       const p = posts.get(i);
       const date = new Date(Number(p.timestamp) * 1000);
 
-      const clone = template.cloneNode(true);
-      clone.style.display = "block"; // Ensure it's visible
+      const clone = postTemplate.cloneNode(true);
+      clone.style.display = "block";
 
       // Fill data
       clone.querySelector(".post-text").innerText = p.text;
       clone.querySelector(".post-time").innerText = date.toString();
-      clone.querySelector(".post-creator").innerText = p.creator.username;
+
+      const creatorEl = clone.querySelector(".post-creator");
+      if (creatorEl) creatorEl.innerText = p.creator.username;
 
       // Hook buttons
       const deleteBtn = clone.querySelector(".delete-post-btn");
       if (deleteBtn) {
         deleteBtn.onclick = () => {
           di.postStorageHandler.DeletePost(p.post_id);
-          window.location.reload();
+          showTimeline("main"); // Refresh without reload
         };
       }
 
@@ -47,7 +48,7 @@ export default function showTimeline(type) {
       if (editBtn) {
         editBtn.onclick = () => {
           di.postStorageHandler.EditPostText(p.post_id, "edited post");
-          window.location.reload();
+          showTimeline("main"); // Refresh without reload
         };
       }
 
@@ -56,16 +57,38 @@ export default function showTimeline(type) {
   }
 }
 
-showTimeline("main");
+// Global exposure
+window.showTimeline = showTimeline;
 
-// Checkbox Listener
-const toggle = document.getElementById('only-friends-toggle');
-if (toggle) {
-  toggle.addEventListener('change', () => {
-    // Refresh the page or just clear and redraw.
-    // Since the logic currently appends clones, a full reload or clear is needed.
-    // But the current loop logic relies on existing elements in DOM. 
-    // Ideally we should reload to keep it simple with pure HTML/JS structure provided.
-    window.location.reload();
-  });
+// Global exposure
+window.showTimeline = showTimeline;
+
+function initTimeline() {
+  // 1. Capture Template
+  const allCards = document.getElementsByClassName("post-card");
+  if (allCards.length > 0) {
+    console.log("timeline.js: Template captured.");
+    postTemplate = allCards[0].cloneNode(true);
+    // Remove the dummy/template from DOM so we start fresh
+    allCards[0].remove();
+  } else {
+    console.error("timeline.js: No post-card template found!");
+  }
+
+  // 2. Initial Render
+  showTimeline("main");
+
+  // 3. Listener
+  const toggle = document.getElementById('only-friends-toggle');
+  if (toggle) {
+    toggle.addEventListener('change', () => {
+      showTimeline("main");
+    });
+  }
+}
+
+if (document.readyState === "loading") {
+  document.addEventListener("DOMContentLoaded", initTimeline);
+} else {
+  initTimeline();
 }

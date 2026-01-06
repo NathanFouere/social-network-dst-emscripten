@@ -116,44 +116,33 @@ void SocialGraphHandler::Follow(int64_t user_id, int64_t followee_id) {
     return;
 
   // Add to followees of user_id
-  bool alreadyFollowing = false;
-  for (auto id : u->followees)
-    if (id == followee_id)
-      alreadyFollowing = true;
-  if (!alreadyFollowing)
+  if (std::find(u->followees.begin(), u->followees.end(), followee_id) ==
+      u->followees.end()) {
     u->followees.push_back(followee_id);
+  }
 
   // Add to followers of followee_id
-  bool alreadyFollower = false;
-  for (auto id : f->followers)
-    if (id == user_id)
-      alreadyFollower = true;
-  if (!alreadyFollower)
+  if (std::find(f->followers.begin(), f->followers.end(), user_id) ==
+      f->followers.end()) {
     f->followers.push_back(user_id);
+  }
 
   // Check mutual friendship
-  // If followee_id follows user_id (is in u's followers OR u is in f's
-  // followees)
-  bool isMutual = false;
-  for (auto id : u->followers)
-    if (id == followee_id)
-      isMutual = true;
+  // If followee_id follows user_id (is in u's followers)
+  bool isMutual = std::find(u->followers.begin(), u->followers.end(),
+                            followee_id) != u->followers.end();
 
   if (isMutual) {
     // Add friends
-    bool f1 = false;
-    for (auto id : u->friends)
-      if (id == followee_id)
-        f1 = true;
-    if (!f1)
+    if (std::find(u->friends.begin(), u->friends.end(), followee_id) ==
+        u->friends.end()) {
       u->friends.push_back(followee_id);
+    }
 
-    bool f2 = false;
-    for (auto id : f->friends)
-      if (id == user_id)
-        f2 = true;
-    if (!f2)
+    if (std::find(f->friends.begin(), f->friends.end(), user_id) ==
+        f->friends.end()) {
       f->friends.push_back(user_id);
+    }
   }
 
   save_user_graph_in_indexed_db(u->toJson().dump().c_str());
@@ -236,6 +225,7 @@ EMSCRIPTEN_BINDINGS(social_graph_module) {
       .function("InsertUser", &SocialGraphHandler::InsertUser)
       .function("GetFollowers", &SocialGraphHandler::GetFollowers)
       .function("GetFollowees", &SocialGraphHandler::GetFollowees)
+      .function("GetFriends", &SocialGraphHandler::GetFriends)
       .function("Follow", &SocialGraphHandler::Follow)
       .function("Unfollow", &SocialGraphHandler::Unfollow)
       .function("FollowWithUsername", &SocialGraphHandler::FollowWithUsername)

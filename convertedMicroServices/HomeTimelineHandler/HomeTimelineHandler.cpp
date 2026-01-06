@@ -1,5 +1,6 @@
 #include "HomeTimelineHandler.hpp"
 #include <emscripten/bind.h>
+#include <unordered_set>
 
 using namespace emscripten;
 
@@ -24,34 +25,36 @@ std::vector<Post> HomeTimelineHandler::ReadHomeTimeline(int64_t user_id,
 
   std::cout << "ReadHomeTimeline called. only_friends: " << only_friends
             << std::endl;
+  std::cout << "ReadHomeTimeline: Total posts fetched from storage: "
+            << posts.size() << std::endl;
 
   if (only_friends) {
     std::vector<int64_t> followees =
         this->socialGraphHandler.GetFollowees(user_id);
     std::vector<int64_t> friends = this->socialGraphHandler.GetFriends(user_id);
 
-    // Combine lists
-    std::vector<int64_t> allowed_ids = followees;
-    allowed_ids.insert(allowed_ids.end(), friends.begin(), friends.end());
-    allowed_ids.push_back(user_id); // Include self
+    std::unordered_set<int64_t> allowed_ids;
+    allowed_ids.insert(followees.begin(), followees.end());
+    allowed_ids.insert(friends.begin(), friends.end());
+    allowed_ids.insert(user_id); // Include self
+
+    std::cout << "ReadHomeTimeline: Filtering. Allowed IDs count: "
+              << allowed_ids.size() << std::endl;
 
     std::vector<Post> filtered_posts;
+    filtered_posts.reserve(posts.size()); // Optimize allocation
+
     for (const auto &post : posts) {
-      bool found = false;
-      for (int64_t id : allowed_ids) {
-        if (id == post.creator.user_id) {
-          found = true;
-          break;
-        }
-      }
-      if (found) {
+      if (allowed_ids.find(post.creator.user_id) != allowed_ids.end()) {
         filtered_posts.push_back(post);
       }
     }
 
+    std::cout << "ReadHomeTimeline: Posts after filtering: "
+              << filtered_posts.size() << std::endl;
+
     // Handle pagination manually on the filtered list
     std::vector<Post> paged_posts;
-    int count = 0;
     for (size_t i = start_idx;
          i < filtered_posts.size() && i < (size_t)stop_idx; ++i) {
       paged_posts.push_back(filtered_posts[i]);
