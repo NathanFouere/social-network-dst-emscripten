@@ -7,6 +7,50 @@ async function Module(moduleArg = {}) {
   var moduleRtn;
 
 // include: shell.js
+// include: minimum_runtime_check.js
+(function() {
+  // "30.0.0" -> 300000
+  function humanReadableVersionToPacked(str) {
+    str = str.split('-')[0]; // Remove any trailing part from e.g. "12.53.3-alpha"
+    var vers = str.split('.').slice(0, 3);
+    while(vers.length < 3) vers.push('00');
+    vers = vers.map((n, i, arr) => n.padStart(2, '0'));
+    return vers.join('');
+  }
+  // 300000 -> "30.0.0"
+  var packedVersionToHumanReadable = n => [n / 10000 | 0, (n / 100 | 0) % 100, n % 100].join('.');
+
+  var TARGET_NOT_SUPPORTED = 2147483647;
+
+  // Note: We use a typeof check here instead of optional chaining using
+  // globalThis because older browsers might not have globalThis defined.
+  var currentNodeVersion = typeof process !== 'undefined' && process.versions?.node ? humanReadableVersionToPacked(process.versions.node) : TARGET_NOT_SUPPORTED;
+  if (currentNodeVersion < 160000) {
+    throw new Error(`This emscripten-generated code requires node v${ packedVersionToHumanReadable(160000) } (detected v${packedVersionToHumanReadable(currentNodeVersion)})`);
+  }
+
+  var userAgent = typeof navigator !== 'undefined' && navigator.userAgent;
+  if (!userAgent) {
+    return;
+  }
+
+  var currentSafariVersion = userAgent.includes("Safari/") && !userAgent.includes("Chrome/") && userAgent.match(/Version\/(\d+\.?\d*\.?\d*)/) ? humanReadableVersionToPacked(userAgent.match(/Version\/(\d+\.?\d*\.?\d*)/)[1]) : TARGET_NOT_SUPPORTED;
+  if (currentSafariVersion < 150000) {
+    throw new Error(`This emscripten-generated code requires Safari v${ packedVersionToHumanReadable(150000) } (detected v${currentSafariVersion})`);
+  }
+
+  var currentFirefoxVersion = userAgent.match(/Firefox\/(\d+(?:\.\d+)?)/) ? parseFloat(userAgent.match(/Firefox\/(\d+(?:\.\d+)?)/)[1]) : TARGET_NOT_SUPPORTED;
+  if (currentFirefoxVersion < 79) {
+    throw new Error(`This emscripten-generated code requires Firefox v79 (detected v${currentFirefoxVersion})`);
+  }
+
+  var currentChromeVersion = userAgent.match(/Chrome\/(\d+(?:\.\d+)?)/) ? parseFloat(userAgent.match(/Chrome\/(\d+(?:\.\d+)?)/)[1]) : TARGET_NOT_SUPPORTED;
+  if (currentChromeVersion < 85) {
+    throw new Error(`This emscripten-generated code requires Chrome v85 (detected v${currentChromeVersion})`);
+  }
+})();
+
+// end include: minimum_runtime_check.js
 // The Module object: Our interface to the outside world. We import
 // and export values on it. There are various ways Module can be used:
 // 1. Not defined. We create it here
@@ -26,11 +70,11 @@ var Module = moduleArg;
 // setting the ENVIRONMENT setting at compile time (see settings.js).
 
 // Attempt to auto-detect the environment
-var ENVIRONMENT_IS_WEB = typeof window == 'object';
-var ENVIRONMENT_IS_WORKER = typeof WorkerGlobalScope != 'undefined';
+var ENVIRONMENT_IS_WEB = !!globalThis.window;
+var ENVIRONMENT_IS_WORKER = !!globalThis.WorkerGlobalScope;
 // N.b. Electron.js environment is simultaneously a NODE-environment, but
 // also a web environment.
-var ENVIRONMENT_IS_NODE = typeof process == 'object' && process.versions?.node && process.type != 'renderer';
+var ENVIRONMENT_IS_NODE = globalThis.process?.versions?.node && globalThis.process?.type != 'renderer';
 var ENVIRONMENT_IS_SHELL = !ENVIRONMENT_IS_WEB && !ENVIRONMENT_IS_NODE && !ENVIRONMENT_IS_WORKER;
 
 if (ENVIRONMENT_IS_NODE) {
@@ -67,15 +111,8 @@ function locateFile(path) {
 var readAsync, readBinary;
 
 if (ENVIRONMENT_IS_NODE) {
-  const isNode = typeof process == 'object' && process.versions?.node && process.type != 'renderer';
+  const isNode = globalThis.process?.versions?.node && globalThis.process?.type != 'renderer';
   if (!isNode) throw new Error('not compiled for this environment (did you build to HTML and try to run it not on the web, or set ENVIRONMENT to something - like node - and run it someplace else - like on the web?)');
-
-  var nodeVersion = process.versions.node;
-  var numericVersion = nodeVersion.split('.').slice(0, 3);
-  numericVersion = (numericVersion[0] * 10000) + (numericVersion[1] * 100) + (numericVersion[2].split('-')[0] * 1);
-  if (numericVersion < 160000) {
-    throw new Error('This emscripten-generated code requires node v16.0.0 (detected v' + nodeVersion + ')');
-  }
 
   // These modules will usually be used on Node.js. Load them eagerly to avoid
   // the complexity of lazy-loading.
@@ -116,9 +153,6 @@ readAsync = async (filename, binary = true) => {
 } else
 if (ENVIRONMENT_IS_SHELL) {
 
-  const isNode = typeof process == 'object' && process.versions?.node && process.type != 'renderer';
-  if (isNode || typeof window == 'object' || typeof WorkerGlobalScope != 'undefined') throw new Error('not compiled for this environment (did you build to HTML and try to run it not on the web, or set ENVIRONMENT to something - like node - and run it someplace else - like on the web?)');
-
 } else
 
 // Note that this includes Node.js workers when relevant (pthreads is enabled).
@@ -132,7 +166,7 @@ if (ENVIRONMENT_IS_WEB || ENVIRONMENT_IS_WORKER) {
     // infer anything from them.
   }
 
-  if (!(typeof window == 'object' || typeof WorkerGlobalScope != 'undefined')) throw new Error('not compiled for this environment (did you build to HTML and try to run it not on the web, or set ENVIRONMENT to something - like node - and run it someplace else - like on the web?)');
+  if (!(globalThis.window || globalThis.WorkerGlobalScope)) throw new Error('not compiled for this environment (did you build to HTML and try to run it not on the web, or set ENVIRONMENT to something - like node - and run it someplace else - like on the web?)');
 
   {
 // include: web_or_worker_shell_read.js
@@ -213,7 +247,7 @@ assert(!ENVIRONMENT_IS_SHELL, 'shell environment detected but not enabled at bui
 
 var wasmBinary;
 
-if (typeof WebAssembly != 'object') {
+if (!globalThis.WebAssembly) {
   err('no native wasm support detected');
 }
 
@@ -309,7 +343,7 @@ function dbg(...args) {
   var h16 = new Int16Array(1);
   var h8 = new Int8Array(h16.buffer);
   h16[0] = 0x6373;
-  if (h8[0] !== 0x73 || h8[1] !== 0x63) throw 'Runtime error: expected the system to be little-endian! (Run with -sSUPPORT_BIG_ENDIAN to bypass)';
+  if (h8[0] !== 0x73 || h8[1] !== 0x63) abort('Runtime error: expected the system to be little-endian! (Run with -sSUPPORT_BIG_ENDIAN to bypass)');
 })();
 
 function consumedModuleProp(prop) {
@@ -340,6 +374,7 @@ function isExportedByForceFilesystem(name) {
   return name === 'FS_createPath' ||
          name === 'FS_createDataFile' ||
          name === 'FS_createPreloadedFile' ||
+         name === 'FS_preloadFile' ||
          name === 'FS_unlink' ||
          name === 'addRunDependency' ||
          // The old FS has some functionality that WasmFS lacks.
@@ -348,50 +383,7 @@ function isExportedByForceFilesystem(name) {
          name === 'removeRunDependency';
 }
 
-/**
- * Intercept access to a global symbol.  This enables us to give informative
- * warnings/errors when folks attempt to use symbols they did not include in
- * their build, or no symbols that no longer exist.
- */
-function hookGlobalSymbolAccess(sym, func) {
-  if (typeof globalThis != 'undefined' && !Object.getOwnPropertyDescriptor(globalThis, sym)) {
-    Object.defineProperty(globalThis, sym, {
-      configurable: true,
-      get() {
-        func();
-        return undefined;
-      }
-    });
-  }
-}
-
-function missingGlobal(sym, msg) {
-  hookGlobalSymbolAccess(sym, () => {
-    warnOnce(`\`${sym}\` is not longer defined by emscripten. ${msg}`);
-  });
-}
-
-missingGlobal('buffer', 'Please use HEAP8.buffer or wasmMemory.buffer');
-missingGlobal('asm', 'Please use wasmExports instead');
-
 function missingLibrarySymbol(sym) {
-  hookGlobalSymbolAccess(sym, () => {
-    // Can't `abort()` here because it would break code that does runtime
-    // checks.  e.g. `if (typeof SDL === 'undefined')`.
-    var msg = `\`${sym}\` is a library symbol and not included by default; add it to your library.js __deps or to DEFAULT_LIBRARY_FUNCS_TO_INCLUDE on the command line`;
-    // DEFAULT_LIBRARY_FUNCS_TO_INCLUDE requires the name as it appears in
-    // library.js, which means $name for a JS name with no prefix, or name
-    // for a JS name like _name.
-    var librarySymbol = sym;
-    if (!librarySymbol.startsWith('_')) {
-      librarySymbol = '$' + sym;
-    }
-    msg += ` (e.g. -sDEFAULT_LIBRARY_FUNCS_TO_INCLUDE='${librarySymbol}')`;
-    if (isExportedByForceFilesystem(sym)) {
-      msg += '. Alternatively, forcing filesystem support (-sFORCE_FILESYSTEM) can export this for you';
-    }
-    warnOnce(msg);
-  });
 
   // Any symbol that is not included from the JS library is also (by definition)
   // not exported on the Module object.
@@ -408,7 +400,7 @@ function unexportedRuntimeSymbol(sym) {
           msg += '. Alternatively, forcing filesystem support (-sFORCE_FILESYSTEM) can export this for you';
         }
         abort(msg);
-      }
+      },
     });
   }
 }
@@ -417,9 +409,6 @@ function unexportedRuntimeSymbol(sym) {
 var readyPromiseResolve, readyPromiseReject;
 
 // Memory management
-
-var wasmMemory;
-
 var
 /** @type {!Int8Array} */
   HEAP8,
@@ -467,7 +456,7 @@ function updateMemoryViews() {
 // include: memoryprofiler.js
 // end include: memoryprofiler.js
 // end include: runtime_common.js
-assert(typeof Int32Array != 'undefined' && typeof Float64Array !== 'undefined' && Int32Array.prototype.subarray != undefined && Int32Array.prototype.set != undefined,
+assert(globalThis.Int32Array && globalThis.Float64Array && Int32Array.prototype.subarray && Int32Array.prototype.set,
        'JS engine does not provide full typed array support');
 
 function preRun() {
@@ -516,76 +505,6 @@ function postRun() {
   // Begin ATPOSTRUNS hooks
   callRuntimeCallbacks(onPostRuns);
   // End ATPOSTRUNS hooks
-}
-
-// A counter of dependencies for calling run(). If we need to
-// do asynchronous work before running, increment this and
-// decrement it. Incrementing must happen in a place like
-// Module.preRun (used by emcc to add file preloading).
-// Note that you can add dependencies in preRun, even though
-// it happens right before run - run will be postponed until
-// the dependencies are met.
-var runDependencies = 0;
-var dependenciesFulfilled = null; // overridden to take different actions when all run dependencies are fulfilled
-var runDependencyTracking = {};
-var runDependencyWatcher = null;
-
-function addRunDependency(id) {
-  runDependencies++;
-
-  Module['monitorRunDependencies']?.(runDependencies);
-
-  if (id) {
-    assert(!runDependencyTracking[id]);
-    runDependencyTracking[id] = 1;
-    if (runDependencyWatcher === null && typeof setInterval != 'undefined') {
-      // Check for missing dependencies every few seconds
-      runDependencyWatcher = setInterval(() => {
-        if (ABORT) {
-          clearInterval(runDependencyWatcher);
-          runDependencyWatcher = null;
-          return;
-        }
-        var shown = false;
-        for (var dep in runDependencyTracking) {
-          if (!shown) {
-            shown = true;
-            err('still waiting on run dependencies:');
-          }
-          err(`dependency: ${dep}`);
-        }
-        if (shown) {
-          err('(end of list)');
-        }
-      }, 10000);
-    }
-  } else {
-    err('warning: run dependency added without ID');
-  }
-}
-
-function removeRunDependency(id) {
-  runDependencies--;
-
-  Module['monitorRunDependencies']?.(runDependencies);
-
-  if (id) {
-    assert(runDependencyTracking[id]);
-    delete runDependencyTracking[id];
-  } else {
-    err('warning: run dependency removed without ID');
-  }
-  if (runDependencies == 0) {
-    if (runDependencyWatcher !== null) {
-      clearInterval(runDependencyWatcher);
-      runDependencyWatcher = null;
-    }
-    if (dependenciesFulfilled) {
-      var callback = dependenciesFulfilled;
-      dependenciesFulfilled = null;
-      callback(); // can add another dependenciesFulfilled
-    }
-  }
 }
 
 /** @param {string|number=} what */
@@ -640,11 +559,14 @@ function createExportWrapper(name, nargs) {
 var wasmBinaryFile;
 
 function findWasmBinary() {
+
   if (Module['locateFile']) {
     return locateFile('convertedMicroServices.wasm');
   }
+
   // Use bundler-friendly `new URL(..., import.meta.url)` pattern; works in browsers too.
   return new URL('convertedMicroServices.wasm', import.meta.url).href;
+
 }
 
 function getBinarySync(file) {
@@ -654,6 +576,8 @@ function getBinarySync(file) {
   if (readBinary) {
     return readBinary(file);
   }
+  // Throwing a plain string here, even though it not normally adviables since
+  // this gets turning into an `abort` in instantiateArrayBuffer.
   throw 'both async and sync fetching of the wasm failed';
 }
 
@@ -682,8 +606,8 @@ async function instantiateArrayBuffer(binaryFile, imports) {
     err(`failed to asynchronously prepare wasm: ${reason}`);
 
     // Warn on some common problems.
-    if (isFileURI(wasmBinaryFile)) {
-      err(`warning: Loading from a file URI (${wasmBinaryFile}) is not supported in most browsers. See https://emscripten.org/docs/getting_started/FAQ.html#how-do-i-run-a-local-webserver-for-testing-why-does-my-program-stall-in-downloading-or-preparing`);
+    if (isFileURI(binaryFile)) {
+      err(`warning: Loading from a file URI (${binaryFile}) is not supported in most browsers. See https://emscripten.org/docs/getting_started/FAQ.html#how-do-i-run-a-local-webserver-for-testing-why-does-my-program-stall-in-downloading-or-preparing`);
     }
     abort(reason);
   }
@@ -722,10 +646,11 @@ function getWasmImports() {
   // the Promise API on the import side.
   Asyncify.instrumentWasmImports(wasmImports);
   // prepare imports
-  return {
+  var imports = {
     'env': wasmImports,
     'wasi_snapshot_preview1': wasmImports,
-  }
+  };
+  return imports;
 }
 
 // Create the wasm instance.
@@ -740,19 +665,12 @@ async function createWasm() {
 
     wasmExports = Asyncify.instrumentWasmExports(wasmExports);
 
-    
+    assignWasmExports(wasmExports);
 
-    wasmMemory = wasmExports['memory'];
-    
-    assert(wasmMemory, 'memory not found in wasm exports');
     updateMemoryViews();
 
-    assignWasmExports(wasmExports);
-    removeRunDependency('wasm-instantiate');
     return wasmExports;
   }
-  // wait for the pthread pool (if any)
-  addRunDependency('wasm-instantiate');
 
   // Prefer streaming instantiation if available.
   // Async compilation can be confusing when an error on the page overwrites Module
@@ -780,8 +698,8 @@ async function createWasm() {
   if (Module['instantiateWasm']) {
     return new Promise((resolve, reject) => {
       try {
-        Module['instantiateWasm'](info, (mod, inst) => {
-          resolve(receiveInstance(mod, inst));
+        Module['instantiateWasm'](info, (inst, mod) => {
+          resolve(receiveInstance(inst, mod));
         });
       } catch(e) {
         err(`Module.instantiateWasm callback failed with error: ${e}`);
@@ -839,6 +757,7 @@ async function createWasm() {
       return f(ptr, ...args);
     };
   var dynCall = (sig, ptr, args = [], promising = false) => {
+      assert(ptr, `null function pointer in dynCall`);
       assert(!promising, 'async dynCall is not supported in this mode')
       var rtn = dynCallLegacy(sig, ptr, args);
   
@@ -872,8 +791,8 @@ async function createWasm() {
   var noExitRuntime = true;
 
   var ptrToString = (ptr) => {
-      assert(typeof ptr === 'number');
-      // With CAN_ADDRESS_2GB or MEMORY64, pointers are already unsigned.
+      assert(typeof ptr === 'number', `ptrToString expects a number, got ${typeof ptr}`);
+      // Convert to 32-bit unsigned value
       ptr >>>= 0;
       return '0x' + ptr.toString(16).padStart(8, '0');
     };
@@ -912,7 +831,9 @@ async function createWasm() {
       }
     };
 
-  var UTF8Decoder = typeof TextDecoder != 'undefined' ? new TextDecoder() : undefined;
+  
+
+  var UTF8Decoder = globalThis.TextDecoder && new TextDecoder();
   
   var findStringEnd = (heapOrArray, idx, maxBytesToRead, ignoreNul) => {
       var maxIdx = idx + maxBytesToRead;
@@ -1377,7 +1298,7 @@ async function createWasm() {
       }
     }
   var attachFinalizer = (handle) => {
-      if ('undefined' === typeof FinalizationRegistry) {
+      if (!globalThis.FinalizationRegistry) {
         attachFinalizer = (handle) => handle;
         return handle;
       }
@@ -1901,7 +1822,7 @@ async function createWasm() {
       var typeConverters = new Array(dependentTypes.length);
       var unregisteredTypes = [];
       var registered = 0;
-      dependentTypes.forEach((dt, i) => {
+      for (let [i, dt] of dependentTypes.entries()) {
         if (registeredTypes.hasOwnProperty(dt)) {
           typeConverters[i] = registeredTypes[dt];
         } else {
@@ -1917,7 +1838,7 @@ async function createWasm() {
             }
           });
         }
-      });
+      }
       if (0 === unregisteredTypes.length) {
         onComplete(typeConverters);
       }
@@ -2177,7 +2098,6 @@ async function createWasm() {
     };
   
   
-  /** @suppress {duplicate } */
   /** @param {boolean|number=} implicit */
   var exitJS = (status, implicit) => {
       EXITSTATUS = status;
@@ -2218,6 +2138,7 @@ async function createWasm() {
       }
     };
   
+  
   var runtimeKeepalivePush = () => {
       runtimeKeepaliveCounter += 1;
     };
@@ -2256,7 +2177,7 @@ async function createWasm() {
                     !isAsyncifyImport &&
                     !changedToDisabled &&
                     !ignoredInvoke) {
-                  throw new Error(`import ${x} was not in ASYNCIFY_IMPORTS, but changed the state`);
+                  abort(`import ${x} was not in ASYNCIFY_IMPORTS, but changed the state`);
                 }
               }
             };
@@ -2277,6 +2198,7 @@ async function createWasm() {
           }
         };
         Asyncify.funcWrappers.set(original, wrapper);
+        wrapper = createNamedFunction(`__asyncify_wrapper_${original.name}`, wrapper);
         return wrapper;
       },
   instrumentWasmExports(exports) {
@@ -3129,7 +3051,7 @@ async function createWasm() {
   
   
   
-  var UTF16Decoder = typeof TextDecoder != 'undefined' ? new TextDecoder('utf-16le') : undefined;;
+  var UTF16Decoder = globalThis.TextDecoder ? new TextDecoder('utf-16le') : undefined;;
   
   var UTF16ToString = (ptr, maxBytesToRead, ignoreNul) => {
       assert(ptr % 2 == 0, 'Pointer passed to UTF16ToString must be aligned to two bytes!');
@@ -3565,7 +3487,7 @@ async function createWasm() {
       if (!getEnvStrings.strings) {
         // Default values.
         // Browser language detection #8751
-        var lang = ((typeof navigator == 'object' && navigator.language) || 'C').replace('-', '_') + '.UTF-8';
+        var lang = (globalThis.navigator?.language ?? 'C').replace('-', '_') + '.UTF-8';
         var env = {
           'USER': 'web_user',
           'LOGNAME': 'web_user',
@@ -3792,8 +3714,7 @@ async function createWasm() {
             result = buf.slice(0, bytesRead).toString('utf-8');
           }
         } else
-        if (typeof window != 'undefined' &&
-          typeof window.prompt == 'function') {
+        if (globalThis.window?.prompt) {
           // Browser.
           result = window.prompt('Input: ');  // returns null on cancel
           if (result !== null) {
@@ -4274,68 +4195,6 @@ async function createWasm() {
   },
   };
   
-  var asyncLoad = async (url) => {
-      var arrayBuffer = await readAsync(url);
-      assert(arrayBuffer, `Loading data file "${url}" failed (no arrayBuffer).`);
-      return new Uint8Array(arrayBuffer);
-    };
-  
-  
-  var FS_createDataFile = (...args) => FS.createDataFile(...args);
-  
-  var getUniqueRunDependency = (id) => {
-      var orig = id;
-      while (1) {
-        if (!runDependencyTracking[id]) return id;
-        id = orig + Math.random();
-      }
-    };
-  
-  var preloadPlugins = [];
-  var FS_handledByPreloadPlugin = (byteArray, fullname, finish, onerror) => {
-      // Ensure plugins are ready.
-      if (typeof Browser != 'undefined') Browser.init();
-  
-      var handled = false;
-      preloadPlugins.forEach((plugin) => {
-        if (handled) return;
-        if (plugin['canHandle'](fullname)) {
-          plugin['handle'](byteArray, fullname, finish, onerror);
-          handled = true;
-        }
-      });
-      return handled;
-    };
-  var FS_createPreloadedFile = (parent, name, url, canRead, canWrite, onload, onerror, dontCreateFile, canOwn, preFinish) => {
-      // TODO we should allow people to just pass in a complete filename instead
-      // of parent and name being that we just join them anyways
-      var fullname = name ? PATH_FS.resolve(PATH.join2(parent, name)) : parent;
-      var dep = getUniqueRunDependency(`cp ${fullname}`); // might have several active requests for the same fullname
-      function processData(byteArray) {
-        function finish(byteArray) {
-          preFinish?.();
-          if (!dontCreateFile) {
-            FS_createDataFile(parent, name, byteArray, canRead, canWrite, canOwn);
-          }
-          onload?.();
-          removeRunDependency(dep);
-        }
-        if (FS_handledByPreloadPlugin(byteArray, fullname, finish, () => {
-          onerror?.();
-          removeRunDependency(dep);
-        })) {
-          return;
-        }
-        finish(byteArray);
-      }
-      addRunDependency(dep);
-      if (typeof url == 'string') {
-        asyncLoad(url).then(processData, onerror);
-      } else {
-        processData(url);
-      }
-    };
-  
   var FS_modeStringToFlags = (str) => {
       var flagModes = {
         'r': 0,
@@ -4486,6 +4345,130 @@ async function createWasm() {
       'ENOTRECOVERABLE': 56,
       'EOWNERDEAD': 62,
       'ESTRPIPE': 135,
+    };
+  
+  var asyncLoad = async (url) => {
+      var arrayBuffer = await readAsync(url);
+      assert(arrayBuffer, `Loading data file "${url}" failed (no arrayBuffer).`);
+      return new Uint8Array(arrayBuffer);
+    };
+  
+  
+  var FS_createDataFile = (...args) => FS.createDataFile(...args);
+  
+  var getUniqueRunDependency = (id) => {
+      var orig = id;
+      while (1) {
+        if (!runDependencyTracking[id]) return id;
+        id = orig + Math.random();
+      }
+    };
+  
+  var runDependencies = 0;
+  
+  
+  var dependenciesFulfilled = null;
+  
+  var runDependencyTracking = {
+  };
+  
+  var runDependencyWatcher = null;
+  var removeRunDependency = (id) => {
+      runDependencies--;
+  
+      Module['monitorRunDependencies']?.(runDependencies);
+  
+      assert(id, 'removeRunDependency requires an ID');
+      assert(runDependencyTracking[id]);
+      delete runDependencyTracking[id];
+      if (runDependencies == 0) {
+        if (runDependencyWatcher !== null) {
+          clearInterval(runDependencyWatcher);
+          runDependencyWatcher = null;
+        }
+        if (dependenciesFulfilled) {
+          var callback = dependenciesFulfilled;
+          dependenciesFulfilled = null;
+          callback(); // can add another dependenciesFulfilled
+        }
+      }
+    };
+  
+  
+  var addRunDependency = (id) => {
+      runDependencies++;
+  
+      Module['monitorRunDependencies']?.(runDependencies);
+  
+      assert(id, 'addRunDependency requires an ID')
+      assert(!runDependencyTracking[id]);
+      runDependencyTracking[id] = 1;
+      if (runDependencyWatcher === null && globalThis.setInterval) {
+        // Check for missing dependencies every few seconds
+        runDependencyWatcher = setInterval(() => {
+          if (ABORT) {
+            clearInterval(runDependencyWatcher);
+            runDependencyWatcher = null;
+            return;
+          }
+          var shown = false;
+          for (var dep in runDependencyTracking) {
+            if (!shown) {
+              shown = true;
+              err('still waiting on run dependencies:');
+            }
+            err(`dependency: ${dep}`);
+          }
+          if (shown) {
+            err('(end of list)');
+          }
+        }, 10000);
+        // Prevent this timer from keeping the runtime alive if nothing
+        // else is.
+        runDependencyWatcher.unref?.()
+      }
+    };
+  
+  
+  var preloadPlugins = [];
+  var FS_handledByPreloadPlugin = async (byteArray, fullname) => {
+      // Ensure plugins are ready.
+      if (typeof Browser != 'undefined') Browser.init();
+  
+      for (var plugin of preloadPlugins) {
+        if (plugin['canHandle'](fullname)) {
+          assert(plugin['handle'].constructor.name === 'AsyncFunction', 'Filesystem plugin handlers must be async functions (See #24914)')
+          return plugin['handle'](byteArray, fullname);
+        }
+      }
+      // In no plugin handled this file then return the original/unmodified
+      // byteArray.
+      return byteArray;
+    };
+  var FS_preloadFile = async (parent, name, url, canRead, canWrite, dontCreateFile, canOwn, preFinish) => {
+      // TODO we should allow people to just pass in a complete filename instead
+      // of parent and name being that we just join them anyways
+      var fullname = name ? PATH_FS.resolve(PATH.join2(parent, name)) : parent;
+      var dep = getUniqueRunDependency(`cp ${fullname}`); // might have several active requests for the same fullname
+      addRunDependency(dep);
+  
+      try {
+        var byteArray = url;
+        if (typeof url == 'string') {
+          byteArray = await asyncLoad(url);
+        }
+  
+        byteArray = await FS_handledByPreloadPlugin(byteArray, fullname);
+        preFinish?.();
+        if (!dontCreateFile) {
+          FS_createDataFile(parent, name, byteArray, canRead, canWrite, canOwn);
+        }
+      } finally {
+        removeRunDependency(dep);
+      }
+    };
+  var FS_createPreloadedFile = (parent, name, url, canRead, canWrite, onload, onerror, dontCreateFile, canOwn, preFinish) => {
+      FS_preloadFile(parent, name, url, canRead, canWrite, dontCreateFile, canOwn, preFinish).then(onload).catch(onerror);
     };
   var FS = {
   root:null,
@@ -4957,12 +4940,13 @@ async function createWasm() {
         };
   
         // sync all mounts
-        mounts.forEach((mount) => {
-          if (!mount.type.syncfs) {
-            return done(null);
+        for (var mount of mounts) {
+          if (mount.type.syncfs) {
+            mount.type.syncfs(mount, populate, done);
+          } else {
+            done(null);
           }
-          mount.type.syncfs(mount, populate, done);
-        });
+        }
       },
   mount(type, opts, mountpoint) {
         if (typeof type == 'string') {
@@ -5029,9 +5013,7 @@ async function createWasm() {
         var mount = node.mounted;
         var mounts = FS.getMounts(mount);
   
-        Object.keys(FS.nameTable).forEach((hash) => {
-          var current = FS.nameTable[hash];
-  
+        for (var [hash, current] of Object.entries(FS.nameTable)) {
           while (current) {
             var next = current.name_next;
   
@@ -5041,7 +5023,7 @@ async function createWasm() {
   
             current = next;
           }
-        });
+        }
   
         // no longer a mountpoint
         node.mounted = null;
@@ -5639,7 +5621,7 @@ async function createWasm() {
         opts.flags = opts.flags || 0;
         opts.encoding = opts.encoding || 'binary';
         if (opts.encoding !== 'utf8' && opts.encoding !== 'binary') {
-          throw new Error(`Invalid encoding type "${opts.encoding}"`);
+          abort(`Invalid encoding type "${opts.encoding}"`);
         }
         var stream = FS.open(path, opts.flags);
         var stat = FS.stat(path);
@@ -5661,7 +5643,7 @@ async function createWasm() {
         if (ArrayBuffer.isView(data)) {
           FS.write(stream, data, 0, data.byteLength, undefined, opts.canOwn);
         } else {
-          throw new Error('Unsupported data type');
+          abort('Unsupported data type');
         }
         FS.close(stream);
       },
@@ -5956,12 +5938,11 @@ async function createWasm() {
       },
   forceLoadFile(obj) {
         if (obj.isDevice || obj.isFolder || obj.link || obj.contents) return true;
-        if (typeof XMLHttpRequest != 'undefined') {
-          throw new Error("Lazy loading should have been performed (contents set) in createLazyFile, but it was not. Lazy loading only works in web workers. Use --embed-file or --preload-file in emcc on the main thread.");
+        if (globalThis.XMLHttpRequest) {
+          abort("Lazy loading should have been performed (contents set) in createLazyFile, but it was not. Lazy loading only works in web workers. Use --embed-file or --preload-file in emcc on the main thread.");
         } else { // Command-line.
           try {
             obj.contents = readBinary(obj.url);
-            obj.usedBytes = obj.contents.length;
           } catch (e) {
             throw new FS.ErrnoError(29);
           }
@@ -5989,7 +5970,7 @@ async function createWasm() {
             var xhr = new XMLHttpRequest();
             xhr.open('HEAD', url, false);
             xhr.send(null);
-            if (!(xhr.status >= 200 && xhr.status < 300 || xhr.status === 304)) throw new Error("Couldn't load " + url + ". Status: " + xhr.status);
+            if (!(xhr.status >= 200 && xhr.status < 300 || xhr.status === 304)) abort("Couldn't load " + url + ". Status: " + xhr.status);
             var datalength = Number(xhr.getResponseHeader("Content-length"));
             var header;
             var hasByteServing = (header = xhr.getResponseHeader("Accept-Ranges")) && header === "bytes";
@@ -6001,8 +5982,8 @@ async function createWasm() {
   
             // Function to get a range from the remote URL.
             var doXHR = (from, to) => {
-              if (from > to) throw new Error("invalid range (" + from + ", " + to + ") or no bytes requested!");
-              if (to > datalength-1) throw new Error("only " + datalength + " bytes available! programmer error!");
+              if (from > to) abort("invalid range (" + from + ", " + to + ") or no bytes requested!");
+              if (to > datalength-1) abort("only " + datalength + " bytes available! programmer error!");
   
               // TODO: Use mozResponseArrayBuffer, responseStream, etc. if available.
               var xhr = new XMLHttpRequest();
@@ -6016,7 +5997,7 @@ async function createWasm() {
               }
   
               xhr.send(null);
-              if (!(xhr.status >= 200 && xhr.status < 300 || xhr.status === 304)) throw new Error("Couldn't load " + url + ". Status: " + xhr.status);
+              if (!(xhr.status >= 200 && xhr.status < 300 || xhr.status === 304)) abort("Couldn't load " + url + ". Status: " + xhr.status);
               if (xhr.response !== undefined) {
                 return new Uint8Array(/** @type{Array<number>} */(xhr.response || []));
               }
@@ -6030,7 +6011,7 @@ async function createWasm() {
               if (typeof lazyArray.chunks[chunkNum] == 'undefined') {
                 lazyArray.chunks[chunkNum] = doXHR(start, end);
               }
-              if (typeof lazyArray.chunks[chunkNum] == 'undefined') throw new Error('doXHR failed!');
+              if (typeof lazyArray.chunks[chunkNum] == 'undefined') abort('doXHR failed!');
               return lazyArray.chunks[chunkNum];
             });
   
@@ -6060,8 +6041,8 @@ async function createWasm() {
           }
         }
   
-        if (typeof XMLHttpRequest != 'undefined') {
-          if (!ENVIRONMENT_IS_WORKER) throw 'Cannot do synchronous binary XHRs outside webworkers in modern browsers. Use --embed-file or --preload-file in emcc';
+        if (globalThis.XMLHttpRequest) {
+          if (!ENVIRONMENT_IS_WORKER) abort('Cannot do synchronous binary XHRs outside webworkers in modern browsers. Use --embed-file or --preload-file in emcc');
           var lazyArray = new LazyUint8Array();
           var properties = { isDevice: false, contents: lazyArray };
         } else {
@@ -6086,14 +6067,12 @@ async function createWasm() {
         });
         // override each stream op with one that tries to force load the lazy file first
         var stream_ops = {};
-        var keys = Object.keys(node.stream_ops);
-        keys.forEach((key) => {
-          var fn = node.stream_ops[key];
+        for (const [key, fn] of Object.entries(node.stream_ops)) {
           stream_ops[key] = (...args) => {
             FS.forceLoadFile(node);
             return fn(...args);
           };
-        });
+        }
         function writeChunks(stream, buffer, offset, length, position) {
           var contents = stream.node.contents;
           if (position >= contents.length)
@@ -6172,12 +6151,12 @@ async function createWasm() {
         return dir + '/' + path;
       },
   writeStat(buf, stat) {
-        HEAP32[((buf)>>2)] = stat.dev;
-        HEAP32[(((buf)+(4))>>2)] = stat.mode;
+        HEAPU32[((buf)>>2)] = stat.dev;
+        HEAPU32[(((buf)+(4))>>2)] = stat.mode;
         HEAPU32[(((buf)+(8))>>2)] = stat.nlink;
-        HEAP32[(((buf)+(12))>>2)] = stat.uid;
-        HEAP32[(((buf)+(16))>>2)] = stat.gid;
-        HEAP32[(((buf)+(20))>>2)] = stat.rdev;
+        HEAPU32[(((buf)+(12))>>2)] = stat.uid;
+        HEAPU32[(((buf)+(16))>>2)] = stat.gid;
+        HEAPU32[(((buf)+(20))>>2)] = stat.rdev;
         HEAP64[(((buf)+(24))>>3)] = BigInt(stat.size);
         HEAP32[(((buf)+(32))>>2)] = 4096;
         HEAP32[(((buf)+(36))>>2)] = stat.blocks;
@@ -6194,16 +6173,16 @@ async function createWasm() {
         return 0;
       },
   writeStatFs(buf, stats) {
-        HEAP32[(((buf)+(4))>>2)] = stats.bsize;
-        HEAP32[(((buf)+(60))>>2)] = stats.bsize;
+        HEAPU32[(((buf)+(4))>>2)] = stats.bsize;
+        HEAPU32[(((buf)+(60))>>2)] = stats.bsize;
         HEAP64[(((buf)+(8))>>3)] = BigInt(stats.blocks);
         HEAP64[(((buf)+(16))>>3)] = BigInt(stats.bfree);
         HEAP64[(((buf)+(24))>>3)] = BigInt(stats.bavail);
         HEAP64[(((buf)+(32))>>3)] = BigInt(stats.files);
         HEAP64[(((buf)+(40))>>3)] = BigInt(stats.ffree);
-        HEAP32[(((buf)+(48))>>2)] = stats.fsid;
-        HEAP32[(((buf)+(64))>>2)] = stats.flags;  // ST_NOSUID
-        HEAP32[(((buf)+(56))>>2)] = stats.namelen;
+        HEAPU32[(((buf)+(48))>>2)] = stats.fsid;
+        HEAPU32[(((buf)+(64))>>2)] = stats.flags;  // ST_NOSUID
+        HEAPU32[(((buf)+(56))>>2)] = stats.namelen;
       },
   doMsync(addr, stream, len, flags, offset) {
         if (!FS.isFile(stream.node.mode)) {
@@ -6337,6 +6316,7 @@ init_RegisteredPointer();
 assert(emval_handles.length === 5 * 2);
 
   FS.createPreloadedFile = FS_createPreloadedFile;
+  FS.preloadFile = FS_preloadFile;
   FS.staticInit();;
 // End JS library code
 
@@ -6375,6 +6355,13 @@ if (Module['wasmBinary']) wasmBinary = Module['wasmBinary'];
   assert(typeof Module['wasmMemory'] == 'undefined', 'Use of `wasmMemory` detected.  Use -sIMPORTED_MEMORY to define wasmMemory externally');
   assert(typeof Module['INITIAL_MEMORY'] == 'undefined', 'Detected runtime INITIAL_MEMORY setting.  Use -sIMPORTED_MEMORY to define wasmMemory dynamically');
 
+  if (Module['preInit']) {
+    if (typeof Module['preInit'] == 'function') Module['preInit'] = [Module['preInit']];
+    while (Module['preInit'].length > 0) {
+      Module['preInit'].shift()();
+    }
+  }
+  consumedModuleProp('preInit');
 }
 
 // Begin runtime exports
@@ -6406,7 +6393,6 @@ if (Module['wasmBinary']) wasmBinary = Module['wasmBinary'];
   'autoResumeAudioContext',
   'asmjsMangle',
   'HandleAllocator',
-  'getNativeTypeSize',
   'addOnInit',
   'addOnPostCtor',
   'addOnPreMain',
@@ -6518,8 +6504,11 @@ if (Module['wasmBinary']) wasmBinary = Module['wasmBinary'];
   'allocate',
   'writeStringToMemory',
   'writeAsciiToMemory',
+  'allocateUTF8',
+  'allocateUTF8OnStack',
   'demangle',
   'stackTrace',
+  'getNativeTypeSize',
   'getFunctionArgsName',
   'createJsInvokerSignature',
   'PureVirtualError',
@@ -6529,19 +6518,15 @@ if (Module['wasmBinary']) wasmBinary = Module['wasmBinary'];
   'getLiveInheritedInstances',
   'setDelayFunction',
   'count_emval_handles',
-  'emval_get_global',
 ];
 missingLibrarySymbols.forEach(missingLibrarySymbol)
 
   var unexportedSymbols = [
   'run',
-  'addRunDependency',
-  'removeRunDependency',
   'out',
   'err',
   'callMain',
   'abort',
-  'wasmMemory',
   'wasmExports',
   'HEAPF32',
   'HEAPF64',
@@ -6560,6 +6545,7 @@ missingLibrarySymbols.forEach(missingLibrarySymbol)
   'bigintToI53Checked',
   'stackSave',
   'stackRestore',
+  'createNamedFunction',
   'ptrToString',
   'exitJS',
   'getHeapMax',
@@ -6587,8 +6573,11 @@ missingLibrarySymbols.forEach(missingLibrarySymbol)
   'alignMemory',
   'mmapAlloc',
   'wasmTable',
+  'wasmMemory',
   'getUniqueRunDependency',
   'noExitRuntime',
+  'addRunDependency',
+  'removeRunDependency',
   'addOnPreRun',
   'addOnPostRun',
   'freeTableIndexes',
@@ -6648,6 +6637,7 @@ missingLibrarySymbols.forEach(missingLibrarySymbol)
   'SYSCALLS',
   'preloadPlugins',
   'FS_createPreloadedFile',
+  'FS_preloadFile',
   'FS_modeStringToFlags',
   'FS_getMode',
   'FS_stdin_getChar_buffer',
@@ -6787,8 +6777,6 @@ missingLibrarySymbols.forEach(missingLibrarySymbol)
   'Fibers',
   'SDL',
   'SDL_gfx',
-  'allocateUTF8',
-  'allocateUTF8OnStack',
   'print',
   'printErr',
   'jstoi_s',
@@ -6818,7 +6806,6 @@ missingLibrarySymbols.forEach(missingLibrarySymbol)
   'ensureOverloadTable',
   'exposePublicSymbol',
   'replacePublicSymbol',
-  'createNamedFunction',
   'embindRepr',
   'registeredInstances',
   'getBasestPointer',
@@ -6881,11 +6868,10 @@ unexportedSymbols.forEach(unexportedRuntimeSymbol);
 function checkIncomingModuleAPI() {
   ignoredModuleProp('fetchSettings');
 }
-function __asyncjs__edit_post_in_indexed_db(post_json_cstr) { return Asyncify.handleAsync(async () => { const post_json_utf_8 = UTF8ToString(post_json_cstr); const db = await new Promise((resolve, reject) => { const openRequest = indexedDB.open("store"); openRequest.onsuccess = () => resolve(openRequest.result); openRequest.onerror = () => reject(openRequest.error); }); await new Promise((resolve, reject) => { let transaction = db.transaction("posts", "readwrite"); let posts = transaction.objectStore("posts"); let request = posts.put(JSON.parse(post_json_utf_8)); }); }); }
-function __asyncjs__delete_post_in_indexed_db(post_id) { return Asyncify.handleAsync(async () => { const db = await new Promise((resolve, reject) => { const openRequest = indexedDB.open("store"); openRequest.onsuccess = () => resolve(openRequest.result); openRequest.onerror = () => reject(openRequest.error); }); await new Promise((resolve, reject) => { let transaction = db.transaction("posts", "readwrite"); let posts = transaction.objectStore("posts"); let request = posts.delete(Number(post_id)); }); }); }
-function __asyncjs__get_posts_from_indexed_db() { return Asyncify.handleAsync(async () => { const db = await new Promise((resolve, reject) => { const openRequest = indexedDB.open("store"); openRequest.onsuccess = () => resolve(openRequest.result); openRequest.onerror = () => reject(openRequest.error); }); const allPosts = await new Promise((resolve, reject) => { const transaction = db.transaction("posts", "readonly"); const store = transaction.objectStore("posts"); const req = store.getAll(); req.onsuccess = () => resolve(req.result); req.onerror = () => reject(req.error); }); console.log("IndexedDB posts:", JSON.stringify(allPosts)); return stringToNewUTF8(JSON.stringify(allPosts)); }); }
-function __asyncjs__create_posts_structure_in_indexed_db() { return Asyncify.handleAsync(async () => { const db = await new Promise((resolve, reject) => { const openRequest = indexedDB.open("store", 6); openRequest.onsuccess = () => resolve(openRequest.result); openRequest.onerror = () => reject(openRequest.error); openRequest.onupgradeneeded = function() { let db = openRequest.result; if (!db.objectStoreNames.contains('posts')) { const postsObjectStore = db.createObjectStore('posts', {keyPath: 'post_id'}); postsObjectStore.createIndex("post_id", "post_id", { unique: true }); postsObjectStore.createIndex("creator", "creator", { unique: false } ); postsObjectStore.createIndex("text", "text", { unique: false }); postsObjectStore.createIndex("timestamp", "timestamp", { unique: false }); postsObjectStore.createIndex("post_type", "post_type", { unique: false }); } }; }); const allPosts = await new Promise((resolve, reject) => { const transaction = db.transaction("posts", "readonly"); const store = transaction.objectStore("posts"); const req = store.getAll(); req.onsuccess = () => resolve(req.result); req.onerror = () => reject(req.error); }); }); }
-function __asyncjs__save_post_in_indexed_db(post_json_cstr) { return Asyncify.handleAsync(async () => { console.log("debut save post in indexeddb"); const post_json_utf_8 = UTF8ToString(post_json_cstr); const db = await new Promise((resolve, reject) => { const openRequest = indexedDB.open("store"); openRequest.onsuccess = () => resolve(openRequest.result); openRequest.onerror = () => reject(openRequest.error); }); await new Promise((resolve, reject) => { let transaction = db.transaction("posts", "readwrite"); let posts = transaction.objectStore("posts"); let request = posts.add(JSON.parse(post_json_utf_8)); }); console.log("fin save post in indexeddb"); }); }
+function __asyncjs__edit_post_in_indexed_db(post_json_cstr) { return Asyncify.handleAsync(async () => { const post_json_utf_8 = UTF8ToString(post_json_cstr); const updatedPost = JSON.parse(post_json_utf_8); console.log(updatedPost); const postsArray = Module.ydoc.getArray("posts"); let idxOfPost = null; for (let i = 0; i < postsArray.length; i++) { if(postsArray.get(i).post_id == Number(updatedPost.post_id)) { idxOfPost = i; break; } } if(null !== idxOfPost) { postsArray.delete(idxOfPost); postsArray.insert(idxOfPost, [updatedPost]); } }); }
+function __asyncjs__delete_post_in_indexed_db(post_id) { return Asyncify.handleAsync(async () => { const postsArray = Module.ydoc.getArray("posts"); let idxOfPost = null; for (let i = 0; i < postsArray.length; i++) { if(postsArray.get(i).post_id == Number(post_id)) { idxOfPost = i; break; } } if(null !== idxOfPost) { postsArray.delete(idxOfPost) } }); }
+function __asyncjs__get_posts_from_indexed_db() { return Asyncify.handleAsync(async () => { const postsArray = Module.ydoc.getArray("posts"); const allPosts = postsArray; return stringToNewUTF8(JSON.stringify(allPosts)); }); }
+function __asyncjs__save_post_in_indexed_db(post_json_cstr) { return Asyncify.handleAsync(async () => { console.log("debut save post in indexeddb"); const postsArray = Module.ydoc.getArray("posts"); const post_json_utf_8 = UTF8ToString(post_json_cstr); const post = JSON.parse(post_json_utf_8); postsArray.push([post]); }); }
 function get_user_in_session_storage_js() { console.log("Loading user from session storage"); const user_json_str = sessionStorage.getItem('user'); return stringToNewUTF8(user_json_str); }
 function add_user_in_session_storage_js(user_json_cstr) { const user_json_utf_8 = UTF8ToString(user_json_cstr); console.log("Saving user in session storage"); console.log("Saving user ...", JSON.parse(user_json_utf_8)); sessionStorage.setItem('user', user_json_utf_8); console.log("User has been saved to storage"); }
 
@@ -6954,8 +6940,77 @@ var _asyncify_start_unwind = makeInvalidEarlyAccess('_asyncify_start_unwind');
 var _asyncify_stop_unwind = makeInvalidEarlyAccess('_asyncify_stop_unwind');
 var _asyncify_start_rewind = makeInvalidEarlyAccess('_asyncify_start_rewind');
 var _asyncify_stop_rewind = makeInvalidEarlyAccess('_asyncify_stop_rewind');
+var memory = makeInvalidEarlyAccess('memory');
+var __indirect_function_table = makeInvalidEarlyAccess('__indirect_function_table');
+var wasmMemory = makeInvalidEarlyAccess('wasmMemory');
 
 function assignWasmExports(wasmExports) {
+  assert(typeof wasmExports['__getTypeName'] != 'undefined', 'missing Wasm export: __getTypeName');
+  assert(typeof wasmExports['malloc'] != 'undefined', 'missing Wasm export: malloc');
+  assert(typeof wasmExports['fflush'] != 'undefined', 'missing Wasm export: fflush');
+  assert(typeof wasmExports['emscripten_stack_get_end'] != 'undefined', 'missing Wasm export: emscripten_stack_get_end');
+  assert(typeof wasmExports['emscripten_stack_get_base'] != 'undefined', 'missing Wasm export: emscripten_stack_get_base');
+  assert(typeof wasmExports['strerror'] != 'undefined', 'missing Wasm export: strerror');
+  assert(typeof wasmExports['free'] != 'undefined', 'missing Wasm export: free');
+  assert(typeof wasmExports['emscripten_stack_init'] != 'undefined', 'missing Wasm export: emscripten_stack_init');
+  assert(typeof wasmExports['emscripten_stack_get_free'] != 'undefined', 'missing Wasm export: emscripten_stack_get_free');
+  assert(typeof wasmExports['_emscripten_stack_restore'] != 'undefined', 'missing Wasm export: _emscripten_stack_restore');
+  assert(typeof wasmExports['_emscripten_stack_alloc'] != 'undefined', 'missing Wasm export: _emscripten_stack_alloc');
+  assert(typeof wasmExports['emscripten_stack_get_current'] != 'undefined', 'missing Wasm export: emscripten_stack_get_current');
+  assert(typeof wasmExports['dynCall_v'] != 'undefined', 'missing Wasm export: dynCall_v');
+  assert(typeof wasmExports['dynCall_ii'] != 'undefined', 'missing Wasm export: dynCall_ii');
+  assert(typeof wasmExports['dynCall_vi'] != 'undefined', 'missing Wasm export: dynCall_vi');
+  assert(typeof wasmExports['dynCall_i'] != 'undefined', 'missing Wasm export: dynCall_i');
+  assert(typeof wasmExports['dynCall_ji'] != 'undefined', 'missing Wasm export: dynCall_ji');
+  assert(typeof wasmExports['dynCall_vij'] != 'undefined', 'missing Wasm export: dynCall_vij');
+  assert(typeof wasmExports['dynCall_jii'] != 'undefined', 'missing Wasm export: dynCall_jii');
+  assert(typeof wasmExports['dynCall_viij'] != 'undefined', 'missing Wasm export: dynCall_viij');
+  assert(typeof wasmExports['dynCall_vii'] != 'undefined', 'missing Wasm export: dynCall_vii');
+  assert(typeof wasmExports['dynCall_iii'] != 'undefined', 'missing Wasm export: dynCall_iii');
+  assert(typeof wasmExports['dynCall_viii'] != 'undefined', 'missing Wasm export: dynCall_viii');
+  assert(typeof wasmExports['dynCall_iiii'] != 'undefined', 'missing Wasm export: dynCall_iiii');
+  assert(typeof wasmExports['dynCall_viiii'] != 'undefined', 'missing Wasm export: dynCall_viiii');
+  assert(typeof wasmExports['dynCall_iiiii'] != 'undefined', 'missing Wasm export: dynCall_iiiii');
+  assert(typeof wasmExports['dynCall_viiij'] != 'undefined', 'missing Wasm export: dynCall_viiij');
+  assert(typeof wasmExports['dynCall_iiiij'] != 'undefined', 'missing Wasm export: dynCall_iiiij');
+  assert(typeof wasmExports['dynCall_iiiiiii'] != 'undefined', 'missing Wasm export: dynCall_iiiiiii');
+  assert(typeof wasmExports['dynCall_iijiiiii'] != 'undefined', 'missing Wasm export: dynCall_iijiiiii');
+  assert(typeof wasmExports['dynCall_viijiii'] != 'undefined', 'missing Wasm export: dynCall_viijiii');
+  assert(typeof wasmExports['dynCall_iiijiii'] != 'undefined', 'missing Wasm export: dynCall_iiijiii');
+  assert(typeof wasmExports['dynCall_vijj'] != 'undefined', 'missing Wasm export: dynCall_vijj');
+  assert(typeof wasmExports['dynCall_iiij'] != 'undefined', 'missing Wasm export: dynCall_iiij');
+  assert(typeof wasmExports['dynCall_viijj'] != 'undefined', 'missing Wasm export: dynCall_viijj');
+  assert(typeof wasmExports['dynCall_viiiiij'] != 'undefined', 'missing Wasm export: dynCall_viiiiij');
+  assert(typeof wasmExports['dynCall_viiji'] != 'undefined', 'missing Wasm export: dynCall_viiji');
+  assert(typeof wasmExports['dynCall_viiiii'] != 'undefined', 'missing Wasm export: dynCall_viiiii');
+  assert(typeof wasmExports['dynCall_viiiiiij'] != 'undefined', 'missing Wasm export: dynCall_viiiiiij');
+  assert(typeof wasmExports['dynCall_iiiji'] != 'undefined', 'missing Wasm export: dynCall_iiiji');
+  assert(typeof wasmExports['dynCall_jiii'] != 'undefined', 'missing Wasm export: dynCall_jiii');
+  assert(typeof wasmExports['dynCall_viiiiii'] != 'undefined', 'missing Wasm export: dynCall_viiiiii');
+  assert(typeof wasmExports['dynCall_viji'] != 'undefined', 'missing Wasm export: dynCall_viji');
+  assert(typeof wasmExports['dynCall_iiiiiiii'] != 'undefined', 'missing Wasm export: dynCall_iiiiiiii');
+  assert(typeof wasmExports['dynCall_viiijii'] != 'undefined', 'missing Wasm export: dynCall_viiijii');
+  assert(typeof wasmExports['dynCall_iiiiiiiii'] != 'undefined', 'missing Wasm export: dynCall_iiiiiiiii');
+  assert(typeof wasmExports['dynCall_iiiijii'] != 'undefined', 'missing Wasm export: dynCall_iiiijii');
+  assert(typeof wasmExports['dynCall_vijjj'] != 'undefined', 'missing Wasm export: dynCall_vijjj');
+  assert(typeof wasmExports['dynCall_viijii'] != 'undefined', 'missing Wasm export: dynCall_viijii');
+  assert(typeof wasmExports['dynCall_viijjj'] != 'undefined', 'missing Wasm export: dynCall_viijjj');
+  assert(typeof wasmExports['dynCall_iiijii'] != 'undefined', 'missing Wasm export: dynCall_iiijii');
+  assert(typeof wasmExports['dynCall_vijjji'] != 'undefined', 'missing Wasm export: dynCall_vijjji');
+  assert(typeof wasmExports['dynCall_viijjji'] != 'undefined', 'missing Wasm export: dynCall_viijjji');
+  assert(typeof wasmExports['dynCall_iidiiii'] != 'undefined', 'missing Wasm export: dynCall_iidiiii');
+  assert(typeof wasmExports['dynCall_jiji'] != 'undefined', 'missing Wasm export: dynCall_jiji');
+  assert(typeof wasmExports['dynCall_iiiiii'] != 'undefined', 'missing Wasm export: dynCall_iiiiii');
+  assert(typeof wasmExports['dynCall_iiiiij'] != 'undefined', 'missing Wasm export: dynCall_iiiiij');
+  assert(typeof wasmExports['dynCall_iiiiid'] != 'undefined', 'missing Wasm export: dynCall_iiiiid');
+  assert(typeof wasmExports['dynCall_iiiiijj'] != 'undefined', 'missing Wasm export: dynCall_iiiiijj');
+  assert(typeof wasmExports['dynCall_iiiiiijj'] != 'undefined', 'missing Wasm export: dynCall_iiiiiijj');
+  assert(typeof wasmExports['asyncify_start_unwind'] != 'undefined', 'missing Wasm export: asyncify_start_unwind');
+  assert(typeof wasmExports['asyncify_stop_unwind'] != 'undefined', 'missing Wasm export: asyncify_stop_unwind');
+  assert(typeof wasmExports['asyncify_start_rewind'] != 'undefined', 'missing Wasm export: asyncify_start_rewind');
+  assert(typeof wasmExports['asyncify_stop_rewind'] != 'undefined', 'missing Wasm export: asyncify_stop_rewind');
+  assert(typeof wasmExports['memory'] != 'undefined', 'missing Wasm export: memory');
+  assert(typeof wasmExports['__indirect_function_table'] != 'undefined', 'missing Wasm export: __indirect_function_table');
   ___getTypeName = createExportWrapper('__getTypeName', 1);
   _malloc = createExportWrapper('malloc', 1);
   _fflush = createExportWrapper('fflush', 1);
@@ -6968,64 +7023,65 @@ function assignWasmExports(wasmExports) {
   __emscripten_stack_restore = wasmExports['_emscripten_stack_restore'];
   __emscripten_stack_alloc = wasmExports['_emscripten_stack_alloc'];
   _emscripten_stack_get_current = wasmExports['emscripten_stack_get_current'];
-  dynCalls['v'] = dynCall_v = createExportWrapper('dynCall_v', 1);
-  dynCalls['ii'] = dynCall_ii = createExportWrapper('dynCall_ii', 2);
-  dynCalls['vi'] = dynCall_vi = createExportWrapper('dynCall_vi', 2);
-  dynCalls['i'] = dynCall_i = createExportWrapper('dynCall_i', 1);
-  dynCalls['ji'] = dynCall_ji = createExportWrapper('dynCall_ji', 2);
-  dynCalls['vij'] = dynCall_vij = createExportWrapper('dynCall_vij', 3);
-  dynCalls['jii'] = dynCall_jii = createExportWrapper('dynCall_jii', 3);
-  dynCalls['viij'] = dynCall_viij = createExportWrapper('dynCall_viij', 4);
-  dynCalls['vii'] = dynCall_vii = createExportWrapper('dynCall_vii', 3);
-  dynCalls['iii'] = dynCall_iii = createExportWrapper('dynCall_iii', 3);
-  dynCalls['viii'] = dynCall_viii = createExportWrapper('dynCall_viii', 4);
-  dynCalls['iiii'] = dynCall_iiii = createExportWrapper('dynCall_iiii', 4);
-  dynCalls['viiii'] = dynCall_viiii = createExportWrapper('dynCall_viiii', 5);
-  dynCalls['iiiii'] = dynCall_iiiii = createExportWrapper('dynCall_iiiii', 5);
-  dynCalls['viiij'] = dynCall_viiij = createExportWrapper('dynCall_viiij', 5);
-  dynCalls['iiiij'] = dynCall_iiiij = createExportWrapper('dynCall_iiiij', 5);
-  dynCalls['iiiiiii'] = dynCall_iiiiiii = createExportWrapper('dynCall_iiiiiii', 7);
-  dynCalls['iijiiiii'] = dynCall_iijiiiii = createExportWrapper('dynCall_iijiiiii', 8);
-  dynCalls['viijiii'] = dynCall_viijiii = createExportWrapper('dynCall_viijiii', 7);
-  dynCalls['iiijiii'] = dynCall_iiijiii = createExportWrapper('dynCall_iiijiii', 7);
-  dynCalls['vijj'] = dynCall_vijj = createExportWrapper('dynCall_vijj', 4);
-  dynCalls['iiij'] = dynCall_iiij = createExportWrapper('dynCall_iiij', 4);
-  dynCalls['viijj'] = dynCall_viijj = createExportWrapper('dynCall_viijj', 5);
-  dynCalls['viiiiij'] = dynCall_viiiiij = createExportWrapper('dynCall_viiiiij', 7);
-  dynCalls['viiji'] = dynCall_viiji = createExportWrapper('dynCall_viiji', 5);
-  dynCalls['viiiii'] = dynCall_viiiii = createExportWrapper('dynCall_viiiii', 6);
-  dynCalls['viiiiiij'] = dynCall_viiiiiij = createExportWrapper('dynCall_viiiiiij', 8);
-  dynCalls['iiiji'] = dynCall_iiiji = createExportWrapper('dynCall_iiiji', 5);
-  dynCalls['jiii'] = dynCall_jiii = createExportWrapper('dynCall_jiii', 4);
-  dynCalls['viiiiii'] = dynCall_viiiiii = createExportWrapper('dynCall_viiiiii', 7);
-  dynCalls['viji'] = dynCall_viji = createExportWrapper('dynCall_viji', 4);
-  dynCalls['iiiiiiii'] = dynCall_iiiiiiii = createExportWrapper('dynCall_iiiiiiii', 8);
-  dynCalls['viiijii'] = dynCall_viiijii = createExportWrapper('dynCall_viiijii', 7);
-  dynCalls['iiiiiiiii'] = dynCall_iiiiiiiii = createExportWrapper('dynCall_iiiiiiiii', 9);
-  dynCalls['iiiijii'] = dynCall_iiiijii = createExportWrapper('dynCall_iiiijii', 7);
-  dynCalls['vijjj'] = dynCall_vijjj = createExportWrapper('dynCall_vijjj', 5);
-  dynCalls['viijii'] = dynCall_viijii = createExportWrapper('dynCall_viijii', 6);
-  dynCalls['viijjj'] = dynCall_viijjj = createExportWrapper('dynCall_viijjj', 6);
-  dynCalls['iiijii'] = dynCall_iiijii = createExportWrapper('dynCall_iiijii', 6);
-  dynCalls['vijjji'] = dynCall_vijjji = createExportWrapper('dynCall_vijjji', 6);
-  dynCalls['viijjji'] = dynCall_viijjji = createExportWrapper('dynCall_viijjji', 7);
-  dynCalls['iidiiii'] = dynCall_iidiiii = createExportWrapper('dynCall_iidiiii', 7);
-  dynCalls['jiji'] = dynCall_jiji = createExportWrapper('dynCall_jiji', 4);
-  dynCalls['iiiiii'] = dynCall_iiiiii = createExportWrapper('dynCall_iiiiii', 6);
-  dynCalls['iiiiij'] = dynCall_iiiiij = createExportWrapper('dynCall_iiiiij', 6);
-  dynCalls['iiiiid'] = dynCall_iiiiid = createExportWrapper('dynCall_iiiiid', 6);
-  dynCalls['iiiiijj'] = dynCall_iiiiijj = createExportWrapper('dynCall_iiiiijj', 7);
-  dynCalls['iiiiiijj'] = dynCall_iiiiiijj = createExportWrapper('dynCall_iiiiiijj', 8);
+  dynCall_v = dynCalls['v'] = createExportWrapper('dynCall_v', 1);
+  dynCall_ii = dynCalls['ii'] = createExportWrapper('dynCall_ii', 2);
+  dynCall_vi = dynCalls['vi'] = createExportWrapper('dynCall_vi', 2);
+  dynCall_i = dynCalls['i'] = createExportWrapper('dynCall_i', 1);
+  dynCall_ji = dynCalls['ji'] = createExportWrapper('dynCall_ji', 2);
+  dynCall_vij = dynCalls['vij'] = createExportWrapper('dynCall_vij', 3);
+  dynCall_jii = dynCalls['jii'] = createExportWrapper('dynCall_jii', 3);
+  dynCall_viij = dynCalls['viij'] = createExportWrapper('dynCall_viij', 4);
+  dynCall_vii = dynCalls['vii'] = createExportWrapper('dynCall_vii', 3);
+  dynCall_iii = dynCalls['iii'] = createExportWrapper('dynCall_iii', 3);
+  dynCall_viii = dynCalls['viii'] = createExportWrapper('dynCall_viii', 4);
+  dynCall_iiii = dynCalls['iiii'] = createExportWrapper('dynCall_iiii', 4);
+  dynCall_viiii = dynCalls['viiii'] = createExportWrapper('dynCall_viiii', 5);
+  dynCall_iiiii = dynCalls['iiiii'] = createExportWrapper('dynCall_iiiii', 5);
+  dynCall_viiij = dynCalls['viiij'] = createExportWrapper('dynCall_viiij', 5);
+  dynCall_iiiij = dynCalls['iiiij'] = createExportWrapper('dynCall_iiiij', 5);
+  dynCall_iiiiiii = dynCalls['iiiiiii'] = createExportWrapper('dynCall_iiiiiii', 7);
+  dynCall_iijiiiii = dynCalls['iijiiiii'] = createExportWrapper('dynCall_iijiiiii', 8);
+  dynCall_viijiii = dynCalls['viijiii'] = createExportWrapper('dynCall_viijiii', 7);
+  dynCall_iiijiii = dynCalls['iiijiii'] = createExportWrapper('dynCall_iiijiii', 7);
+  dynCall_vijj = dynCalls['vijj'] = createExportWrapper('dynCall_vijj', 4);
+  dynCall_iiij = dynCalls['iiij'] = createExportWrapper('dynCall_iiij', 4);
+  dynCall_viijj = dynCalls['viijj'] = createExportWrapper('dynCall_viijj', 5);
+  dynCall_viiiiij = dynCalls['viiiiij'] = createExportWrapper('dynCall_viiiiij', 7);
+  dynCall_viiji = dynCalls['viiji'] = createExportWrapper('dynCall_viiji', 5);
+  dynCall_viiiii = dynCalls['viiiii'] = createExportWrapper('dynCall_viiiii', 6);
+  dynCall_viiiiiij = dynCalls['viiiiiij'] = createExportWrapper('dynCall_viiiiiij', 8);
+  dynCall_iiiji = dynCalls['iiiji'] = createExportWrapper('dynCall_iiiji', 5);
+  dynCall_jiii = dynCalls['jiii'] = createExportWrapper('dynCall_jiii', 4);
+  dynCall_viiiiii = dynCalls['viiiiii'] = createExportWrapper('dynCall_viiiiii', 7);
+  dynCall_viji = dynCalls['viji'] = createExportWrapper('dynCall_viji', 4);
+  dynCall_iiiiiiii = dynCalls['iiiiiiii'] = createExportWrapper('dynCall_iiiiiiii', 8);
+  dynCall_viiijii = dynCalls['viiijii'] = createExportWrapper('dynCall_viiijii', 7);
+  dynCall_iiiiiiiii = dynCalls['iiiiiiiii'] = createExportWrapper('dynCall_iiiiiiiii', 9);
+  dynCall_iiiijii = dynCalls['iiiijii'] = createExportWrapper('dynCall_iiiijii', 7);
+  dynCall_vijjj = dynCalls['vijjj'] = createExportWrapper('dynCall_vijjj', 5);
+  dynCall_viijii = dynCalls['viijii'] = createExportWrapper('dynCall_viijii', 6);
+  dynCall_viijjj = dynCalls['viijjj'] = createExportWrapper('dynCall_viijjj', 6);
+  dynCall_iiijii = dynCalls['iiijii'] = createExportWrapper('dynCall_iiijii', 6);
+  dynCall_vijjji = dynCalls['vijjji'] = createExportWrapper('dynCall_vijjji', 6);
+  dynCall_viijjji = dynCalls['viijjji'] = createExportWrapper('dynCall_viijjji', 7);
+  dynCall_iidiiii = dynCalls['iidiiii'] = createExportWrapper('dynCall_iidiiii', 7);
+  dynCall_jiji = dynCalls['jiji'] = createExportWrapper('dynCall_jiji', 4);
+  dynCall_iiiiii = dynCalls['iiiiii'] = createExportWrapper('dynCall_iiiiii', 6);
+  dynCall_iiiiij = dynCalls['iiiiij'] = createExportWrapper('dynCall_iiiiij', 6);
+  dynCall_iiiiid = dynCalls['iiiiid'] = createExportWrapper('dynCall_iiiiid', 6);
+  dynCall_iiiiijj = dynCalls['iiiiijj'] = createExportWrapper('dynCall_iiiiijj', 7);
+  dynCall_iiiiiijj = dynCalls['iiiiiijj'] = createExportWrapper('dynCall_iiiiiijj', 8);
   _asyncify_start_unwind = createExportWrapper('asyncify_start_unwind', 1);
   _asyncify_stop_unwind = createExportWrapper('asyncify_stop_unwind', 0);
   _asyncify_start_rewind = createExportWrapper('asyncify_start_rewind', 1);
   _asyncify_stop_rewind = createExportWrapper('asyncify_stop_rewind', 0);
+  memory = wasmMemory = wasmExports['memory'];
+  __indirect_function_table = wasmExports['__indirect_function_table'];
 }
+
 var wasmImports = {
   /** @export */
   __assert_fail: ___assert_fail,
-  /** @export */
-  __asyncjs__create_posts_structure_in_indexed_db,
   /** @export */
   __asyncjs__delete_post_in_indexed_db,
   /** @export */
@@ -7103,7 +7159,6 @@ var wasmImports = {
   /** @export */
   get_user_in_session_storage_js
 };
-var wasmExports = await createWasm();
 
 
 // include: postamble.js
@@ -7191,7 +7246,7 @@ function checkUnflushedContent() {
   try { // it doesn't matter if it fails
     _fflush(0);
     // also flush in the JS FS layer
-    ['stdout', 'stderr'].forEach((name) => {
+    for (var name of ['stdout', 'stderr']) {
       var info = FS.analyzePath('/dev/' + name);
       if (!info) return;
       var stream = info.object;
@@ -7200,7 +7255,7 @@ function checkUnflushedContent() {
       if (tty?.output?.length) {
         has = true;
       }
-    });
+    }
   } catch(e) {}
   out = oldOut;
   err = oldErr;
@@ -7209,17 +7264,12 @@ function checkUnflushedContent() {
   }
 }
 
-function preInit() {
-  if (Module['preInit']) {
-    if (typeof Module['preInit'] == 'function') Module['preInit'] = [Module['preInit']];
-    while (Module['preInit'].length > 0) {
-      Module['preInit'].shift()();
-    }
-  }
-  consumedModuleProp('preInit');
-}
+var wasmExports;
 
-preInit();
+// In modularize mode the generated code is within a factory function so we
+// can use await here (since it's not top-level-await).
+wasmExports = await (createWasm());
+
 run();
 
 // end include: postamble.js
