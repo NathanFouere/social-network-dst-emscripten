@@ -1,0 +1,18 @@
+
+# Build Artifacts
+CMakeFiles/
+CMakeCache.txt
+cmake_install.cmake
+Makefile
+*.cmake
+compile_commands.json
+
+# Caches
+.emscripten_cache/
+.DS_Store
+.idea/
+
+# Unix/Linux
+*_prefix/
+convertMicroServices.js
+convertMicroServices.wasm

@@ -6868,8 +6868,10 @@ unexportedSymbols.forEach(unexportedRuntimeSymbol);
 function checkIncomingModuleAPI() {
   ignoredModuleProp('fetchSettings');
 }
-function __asyncjs__edit_post_in_indexed_db(post_json_cstr) { return Asyncify.handleAsync(async () => { const post_json_utf_8 = UTF8ToString(post_json_cstr); const updatedPost = JSON.parse(post_json_utf_8); console.log(updatedPost); const postsArray = Module.ydoc.getArray("posts"); let idxOfPost = null; for (let i = 0; i < postsArray.length; i++) { if(postsArray.get(i).post_id == Number(updatedPost.post_id)) { idxOfPost = i; break; } } if(null !== idxOfPost) { postsArray.delete(idxOfPost); postsArray.insert(idxOfPost, [updatedPost]); } }); }
-function __asyncjs__delete_post_in_indexed_db(post_id) { return Asyncify.handleAsync(async () => { const postsArray = Module.ydoc.getArray("posts"); let idxOfPost = null; for (let i = 0; i < postsArray.length; i++) { if(postsArray.get(i).post_id == Number(post_id)) { idxOfPost = i; break; } } if(null !== idxOfPost) { postsArray.delete(idxOfPost) } }); }
+function __asyncjs__get_social_graph_from_indexed_db() { return Asyncify.handleAsync(async () => { const val = Module.ydoc.getArray("social_graph"); return stringToNewUTF8(JSON.stringify(val)); }); }
+function __asyncjs__save_user_graph_in_indexed_db(ug_json_cstr) { return Asyncify.handleAsync(async () => { const ug_json_utf_8 = UTF8ToString(ug_json_cstr); const updatedUg = JSON.parse(ug_json_utf_8); const ugArray = Module.ydoc.getArray("social_graph"); let idx = null; for (let i = 0; i < ugArray.length; i++) { if (ugArray.get(i).user_id == Number(updatedUg.user_id)) { idx = i; break; } } if (null != idx) { ugArray.delete(idx); ugArray.insert(idx, [updatedUg]); } else { ugArray.push([updatedUg]); } }); }
+function __asyncjs__edit_post_in_indexed_db(post_json_cstr) { return Asyncify.handleAsync(async () => { const post_json_utf_8 = UTF8ToString(post_json_cstr); const updatedPost = JSON.parse(post_json_utf_8); console.log(updatedPost); const postsArray = Module.ydoc.getArray("posts"); let idxOfPost = null; for (let i = 0; i < postsArray.length; i++) { if (postsArray.get(i).post_id == Number(updatedPost.post_id)) { idxOfPost = i; break; } } if (null != idxOfPost) { postsArray.delete(idxOfPost); postsArray.insert(idxOfPost, [updatedPost]); } }); }
+function __asyncjs__delete_post_in_indexed_db(post_id) { return Asyncify.handleAsync(async () => { const postsArray = Module.ydoc.getArray("posts"); let idxOfPost = null; for (let i = 0; i < postsArray.length; i++) { if (postsArray.get(i).post_id == Number(post_id)) { idxOfPost = i; break; } } if (null != idxOfPost) { postsArray.delete(idxOfPost) } }); }
 function __asyncjs__get_posts_from_indexed_db() { return Asyncify.handleAsync(async () => { const postsArray = Module.ydoc.getArray("posts"); const allPosts = postsArray; return stringToNewUTF8(JSON.stringify(allPosts)); }); }
 function __asyncjs__save_post_in_indexed_db(post_json_cstr) { return Asyncify.handleAsync(async () => { console.log("debut save post in indexeddb"); const postsArray = Module.ydoc.getArray("posts"); const post_json_utf_8 = UTF8ToString(post_json_cstr); const post = JSON.parse(post_json_utf_8); postsArray.push([post]); }); }
 function get_user_in_session_storage_js() { console.log("Loading user from session storage"); const user_json_str = sessionStorage.getItem('user'); return stringToNewUTF8(user_json_str); }
@@ -6908,17 +6910,17 @@ var dynCall_iiiiiii = makeInvalidEarlyAccess('dynCall_iiiiiii');
 var dynCall_iijiiiii = makeInvalidEarlyAccess('dynCall_iijiiiii');
 var dynCall_viijiii = makeInvalidEarlyAccess('dynCall_viijiii');
 var dynCall_iiijiii = makeInvalidEarlyAccess('dynCall_iiijiii');
+var dynCall_viji = makeInvalidEarlyAccess('dynCall_viji');
 var dynCall_vijj = makeInvalidEarlyAccess('dynCall_vijj');
+var dynCall_viiji = makeInvalidEarlyAccess('dynCall_viiji');
 var dynCall_iiij = makeInvalidEarlyAccess('dynCall_iiij');
 var dynCall_viijj = makeInvalidEarlyAccess('dynCall_viijj');
 var dynCall_viiiiij = makeInvalidEarlyAccess('dynCall_viiiiij');
-var dynCall_viiji = makeInvalidEarlyAccess('dynCall_viiji');
 var dynCall_viiiii = makeInvalidEarlyAccess('dynCall_viiiii');
 var dynCall_viiiiiij = makeInvalidEarlyAccess('dynCall_viiiiiij');
 var dynCall_iiiji = makeInvalidEarlyAccess('dynCall_iiiji');
 var dynCall_jiii = makeInvalidEarlyAccess('dynCall_jiii');
 var dynCall_viiiiii = makeInvalidEarlyAccess('dynCall_viiiiii');
-var dynCall_viji = makeInvalidEarlyAccess('dynCall_viji');
 var dynCall_iiiiiiii = makeInvalidEarlyAccess('dynCall_iiiiiiii');
 var dynCall_viiijii = makeInvalidEarlyAccess('dynCall_viiijii');
 var dynCall_iiiiiiiii = makeInvalidEarlyAccess('dynCall_iiiiiiiii');
@@ -6977,17 +6979,17 @@ function assignWasmExports(wasmExports) {
   assert(typeof wasmExports['dynCall_iijiiiii'] != 'undefined', 'missing Wasm export: dynCall_iijiiiii');
   assert(typeof wasmExports['dynCall_viijiii'] != 'undefined', 'missing Wasm export: dynCall_viijiii');
   assert(typeof wasmExports['dynCall_iiijiii'] != 'undefined', 'missing Wasm export: dynCall_iiijiii');
+  assert(typeof wasmExports['dynCall_viji'] != 'undefined', 'missing Wasm export: dynCall_viji');
   assert(typeof wasmExports['dynCall_vijj'] != 'undefined', 'missing Wasm export: dynCall_vijj');
+  assert(typeof wasmExports['dynCall_viiji'] != 'undefined', 'missing Wasm export: dynCall_viiji');
   assert(typeof wasmExports['dynCall_iiij'] != 'undefined', 'missing Wasm export: dynCall_iiij');
   assert(typeof wasmExports['dynCall_viijj'] != 'undefined', 'missing Wasm export: dynCall_viijj');
   assert(typeof wasmExports['dynCall_viiiiij'] != 'undefined', 'missing Wasm export: dynCall_viiiiij');
-  assert(typeof wasmExports['dynCall_viiji'] != 'undefined', 'missing Wasm export: dynCall_viiji');
   assert(typeof wasmExports['dynCall_viiiii'] != 'undefined', 'missing Wasm export: dynCall_viiiii');
   assert(typeof wasmExports['dynCall_viiiiiij'] != 'undefined', 'missing Wasm export: dynCall_viiiiiij');
   assert(typeof wasmExports['dynCall_iiiji'] != 'undefined', 'missing Wasm export: dynCall_iiiji');
   assert(typeof wasmExports['dynCall_jiii'] != 'undefined', 'missing Wasm export: dynCall_jiii');
   assert(typeof wasmExports['dynCall_viiiiii'] != 'undefined', 'missing Wasm export: dynCall_viiiiii');
-  assert(typeof wasmExports['dynCall_viji'] != 'undefined', 'missing Wasm export: dynCall_viji');
   assert(typeof wasmExports['dynCall_iiiiiiii'] != 'undefined', 'missing Wasm export: dynCall_iiiiiiii');
   assert(typeof wasmExports['dynCall_viiijii'] != 'undefined', 'missing Wasm export: dynCall_viiijii');
   assert(typeof wasmExports['dynCall_iiiiiiiii'] != 'undefined', 'missing Wasm export: dynCall_iiiiiiiii');
@@ -7043,17 +7045,17 @@ function assignWasmExports(wasmExports) {
   dynCall_iijiiiii = dynCalls['iijiiiii'] = createExportWrapper('dynCall_iijiiiii', 8);
   dynCall_viijiii = dynCalls['viijiii'] = createExportWrapper('dynCall_viijiii', 7);
   dynCall_iiijiii = dynCalls['iiijiii'] = createExportWrapper('dynCall_iiijiii', 7);
+  dynCall_viji = dynCalls['viji'] = createExportWrapper('dynCall_viji', 4);
   dynCall_vijj = dynCalls['vijj'] = createExportWrapper('dynCall_vijj', 4);
+  dynCall_viiji = dynCalls['viiji'] = createExportWrapper('dynCall_viiji', 5);
   dynCall_iiij = dynCalls['iiij'] = createExportWrapper('dynCall_iiij', 4);
   dynCall_viijj = dynCalls['viijj'] = createExportWrapper('dynCall_viijj', 5);
   dynCall_viiiiij = dynCalls['viiiiij'] = createExportWrapper('dynCall_viiiiij', 7);
-  dynCall_viiji = dynCalls['viiji'] = createExportWrapper('dynCall_viiji', 5);
   dynCall_viiiii = dynCalls['viiiii'] = createExportWrapper('dynCall_viiiii', 6);
   dynCall_viiiiiij = dynCalls['viiiiiij'] = createExportWrapper('dynCall_viiiiiij', 8);
   dynCall_iiiji = dynCalls['iiiji'] = createExportWrapper('dynCall_iiiji', 5);
   dynCall_jiii = dynCalls['jiii'] = createExportWrapper('dynCall_jiii', 4);
   dynCall_viiiiii = dynCalls['viiiiii'] = createExportWrapper('dynCall_viiiiii', 7);
-  dynCall_viji = dynCalls['viji'] = createExportWrapper('dynCall_viji', 4);
   dynCall_iiiiiiii = dynCalls['iiiiiiii'] = createExportWrapper('dynCall_iiiiiiii', 8);
   dynCall_viiijii = dynCalls['viiijii'] = createExportWrapper('dynCall_viiijii', 7);
   dynCall_iiiiiiiii = dynCalls['iiiiiiiii'] = createExportWrapper('dynCall_iiiiiiiii', 9);
@@ -7089,7 +7091,11 @@ var wasmImports = {
   /** @export */
   __asyncjs__get_posts_from_indexed_db,
   /** @export */
+  __asyncjs__get_social_graph_from_indexed_db,
+  /** @export */
   __asyncjs__save_post_in_indexed_db,
+  /** @export */
+  __asyncjs__save_user_graph_in_indexed_db,
   /** @export */
   __cxa_throw: ___cxa_throw,
   /** @export */

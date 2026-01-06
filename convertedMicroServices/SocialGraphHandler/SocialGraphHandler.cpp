@@ -1,51 +1,244 @@
 #include "SocialGraphHandler.hpp"
+#include <algorithm>
+#include <emscripten.h>
 #include <emscripten/bind.h>
+#include <iostream>
 
 using namespace emscripten;
+using nlohmann::json;
+
+EM_ASYNC_JS(char *, get_social_graph_from_indexed_db, (), {
+  const val = Module.ydoc.getArray("social_graph");
+  return stringToNewUTF8(JSON.stringify(val));
+});
+
+EM_ASYNC_JS(void, save_user_graph_in_indexed_db, (const char *ug_json_cstr), {
+  const ug_json_utf_8 = UTF8ToString(ug_json_cstr);
+  const updatedUg = JSON.parse(ug_json_utf_8);
+  const ugArray = Module.ydoc.getArray("social_graph");
+
+  let idx = null;
+  for (let i = 0; i < ugArray.length; i++) {
+    if (ugArray.get(i).user_id == Number(updatedUg.user_id)) {
+      idx = i;
+      break;
+    }
+  }
+
+  if (null != idx) {
+    ugArray.delete(idx);
+    ugArray.insert(idx, [updatedUg]);
+  } else {
+    ugArray.push([updatedUg]);
+  }
+});
 
 SocialGraphHandler::SocialGraphHandler() {
+  auto jsonStr = get_social_graph_from_indexed_db();
+  if (jsonStr != nullptr) {
+    json j = json::parse(jsonStr);
+    for (const auto &item : j) {
+      this->social_graph.push_back(UserGraph::fromJson(item));
+    }
+  }
 
+  // Initialisation avec des données de test si vide
+  if (this->social_graph.empty()) {
+    std::cout << "Injecting fake social graph data..." << std::endl;
+    // User ID 1 matches the hardcoded login in UserHandler.cpp
+    InsertUser(1, "user");
+    InsertUser(2, "friend_user");
+    InsertUser(3, "stranger_user");
+    InsertUser(1001, "mark");
+    InsertUser(1002, "elon");
+    InsertUser(1003, "bill");
+
+    // Friend relationship (Mutual follow)
+    Follow(1, 2);
+    Follow(2, 1);
+
+    // Friend relationship with mark
+    Follow(1, 1001);
+    Follow(1001, 1);
+
+    // Simple follow (User follows Elon)
+    Follow(1, 1002);
+
+    // Simple follower (Bill follows User)
+    Follow(1003, 1);
+  }
 }
 
-void SocialGraphHandler::InsertUser(int64_t user_id) {
-    std::cout << "Insert User Appelé !" << std::endl;
+UserGraph *SocialGraphHandler::GetUserGraph(int64_t user_id) {
+  for (auto &ug : this->social_graph) {
+    if (ug.user_id == user_id)
+      return &ug;
+  }
+  return nullptr;
+}
+
+void SocialGraphHandler::InsertUser(int64_t user_id, std::string username) {
+  if (GetUserGraph(user_id) == nullptr) {
+    UserGraph ug;
+    ug.user_id = user_id;
+    ug.username = username;
+    this->social_graph.push_back(ug);
+    save_user_graph_in_indexed_db(ug.toJson().dump().c_str());
+  }
 }
 
 std::vector<int64_t> SocialGraphHandler::GetFollowers(const int64_t user_id) {
-    std::cout << "Get Followers Appelé !" << std::endl;
-    return std::vector<int64_t>{};
+  UserGraph *ug = GetUserGraph(user_id);
+  if (ug)
+    return ug->followers;
+  return {};
 }
 
 std::vector<int64_t> SocialGraphHandler::GetFollowees(const int64_t user_id) {
-    std::cout << "Get Followees Appelé !" << std::endl;
-    return std::vector<int64_t>{};
+  UserGraph *ug = GetUserGraph(user_id);
+  if (ug)
+    return ug->followees;
+  return {};
+}
+
+std::vector<int64_t> SocialGraphHandler::GetFriends(const int64_t user_id) {
+  UserGraph *ug = GetUserGraph(user_id);
+  if (ug)
+    return ug->friends;
+  return {};
 }
 
 void SocialGraphHandler::Follow(int64_t user_id, int64_t followee_id) {
-    std::cout << "Follow Appelé !" << std::endl;
+  UserGraph *u = GetUserGraph(user_id);
+  UserGraph *f = GetUserGraph(followee_id);
+
+  if (!u || !f)
+    return;
+
+  // Add to followees of user_id
+  bool alreadyFollowing = false;
+  for (auto id : u->followees)
+    if (id == followee_id)
+      alreadyFollowing = true;
+  if (!alreadyFollowing)
+    u->followees.push_back(followee_id);
+
+  // Add to followers of followee_id
+  bool alreadyFollower = false;
+  for (auto id : f->followers)
+    if (id == user_id)
+      alreadyFollower = true;
+  if (!alreadyFollower)
+    f->followers.push_back(user_id);
+
+  // Check mutual friendship
+  // If followee_id follows user_id (is in u's followers OR u is in f's
+  // followees)
+  bool isMutual = false;
+  for (auto id : u->followers)
+    if (id == followee_id)
+      isMutual = true;
+
+  if (isMutual) {
+    // Add friends
+    bool f1 = false;
+    for (auto id : u->friends)
+      if (id == followee_id)
+        f1 = true;
+    if (!f1)
+      u->friends.push_back(followee_id);
+
+    bool f2 = false;
+    for (auto id : f->friends)
+      if (id == user_id)
+        f2 = true;
+    if (!f2)
+      f->friends.push_back(user_id);
+  }
+
+  save_user_graph_in_indexed_db(u->toJson().dump().c_str());
+  save_user_graph_in_indexed_db(f->toJson().dump().c_str());
 }
 
 void SocialGraphHandler::Unfollow(int64_t user_id, int64_t followee_id) {
-    std::cout << "Unfollow Appelé !" << std::endl;
+  UserGraph *u = GetUserGraph(user_id);
+  UserGraph *f = GetUserGraph(followee_id);
+
+  if (!u || !f)
+    return;
+
+  // Remove from followees
+  u->followees.erase(
+      std::remove(u->followees.begin(), u->followees.end(), followee_id),
+      u->followees.end());
+
+  // Remove from followers
+  f->followers.erase(
+      std::remove(f->followers.begin(), f->followers.end(), user_id),
+      f->followers.end());
+
+  // Remove from friends (friendship broken)
+  u->friends.erase(
+      std::remove(u->friends.begin(), u->friends.end(), followee_id),
+      u->friends.end());
+  f->friends.erase(std::remove(f->friends.begin(), f->friends.end(), user_id),
+                   f->friends.end());
+
+  save_user_graph_in_indexed_db(u->toJson().dump().c_str());
+  save_user_graph_in_indexed_db(f->toJson().dump().c_str());
 }
 
-void SocialGraphHandler::FollowWithUsername(const std::string &user_name, const std::string &followee_name) {
-    std::cout << "Follow With Username Appelé !" << std::endl;
+void SocialGraphHandler::FollowWithUsername(const std::string &user_name,
+                                            const std::string &followee_name) {
+  int64_t id1 = -1, id2 = -1;
+  for (auto &ug : this->social_graph) {
+    if (ug.username == user_name)
+      id1 = ug.user_id;
+    if (ug.username == followee_name)
+      id2 = ug.user_id;
+  }
+
+  // Auto-create known hardcoded users if missing
+  if (id2 == -1) {
+    if (followee_name == "mark") {
+      id2 = 1001;
+      InsertUser(id2, followee_name);
+    } else if (followee_name == "elon") {
+      id2 = 1002;
+      InsertUser(id2, followee_name);
+    } else if (followee_name == "bill") {
+      id2 = 1003;
+      InsertUser(id2, followee_name);
+    }
+  }
+
+  if (id1 != -1 && id2 != -1)
+    Follow(id1, id2);
 }
 
-void SocialGraphHandler::UnfollowWithUsername(const std::string &user_name, const std::string &followee_name) {
-    std::cout << "Unfollow With Username Appelé !" << std::endl;
+void SocialGraphHandler::UnfollowWithUsername(
+    const std::string &user_name, const std::string &followee_name) {
+  int64_t id1 = -1, id2 = -1;
+  for (auto &ug : this->social_graph) {
+    if (ug.username == user_name)
+      id1 = ug.user_id;
+    if (ug.username == followee_name)
+      id2 = ug.user_id;
+  }
+
+  if (id1 != -1 && id2 != -1)
+    Unfollow(id1, id2);
 }
 
 EMSCRIPTEN_BINDINGS(social_graph_module) {
-    class_<SocialGraphHandler>("SocialGraphHandler")
-        .constructor<>()
-        .function("InsertUser", &SocialGraphHandler::InsertUser)
-        .function("GetFollowers", &SocialGraphHandler::GetFollowers)
-        .function("GetFollowees", &SocialGraphHandler::GetFollowees)
-        .function("Follow", &SocialGraphHandler::Follow)
-        .function("Unfollow", &SocialGraphHandler::Unfollow)
-        .function("FollowWithUsername", &SocialGraphHandler::FollowWithUsername)
-        .function("UnfollowWithUsername", &SocialGraphHandler::UnfollowWithUsername)
-    ;
+  class_<SocialGraphHandler>("SocialGraphHandler")
+      .constructor<>()
+      .function("InsertUser", &SocialGraphHandler::InsertUser)
+      .function("GetFollowers", &SocialGraphHandler::GetFollowers)
+      .function("GetFollowees", &SocialGraphHandler::GetFollowees)
+      .function("Follow", &SocialGraphHandler::Follow)
+      .function("Unfollow", &SocialGraphHandler::Unfollow)
+      .function("FollowWithUsername", &SocialGraphHandler::FollowWithUsername)
+      .function("UnfollowWithUsername",
+                &SocialGraphHandler::UnfollowWithUsername);
 }
