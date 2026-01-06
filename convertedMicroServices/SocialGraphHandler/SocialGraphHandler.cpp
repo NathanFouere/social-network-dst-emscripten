@@ -41,32 +41,6 @@ SocialGraphHandler::SocialGraphHandler() {
       this->social_graph.push_back(UserGraph::fromJson(item));
     }
   }
-
-  // Initialisation avec des données de test si vide
-  if (this->social_graph.empty()) {
-    std::cout << "Injecting fake social graph data..." << std::endl;
-    // User ID 1 matches the hardcoded login in UserHandler.cpp
-    InsertUser(1, "user");
-    InsertUser(2, "friend_user");
-    InsertUser(3, "stranger_user");
-    InsertUser(1001, "mark");
-    InsertUser(1002, "elon");
-    InsertUser(1003, "bill");
-
-    // Friend relationship (Mutual follow)
-    Follow(1, 2);
-    Follow(2, 1);
-
-    // Friend relationship with mark
-    Follow(1, 1001);
-    Follow(1001, 1);
-
-    // Simple follow (User follows Elon)
-    Follow(1, 1002);
-
-    // Simple follower (Bill follows User)
-    Follow(1003, 1);
-  }
 }
 
 UserGraph *SocialGraphHandler::GetUserGraph(int64_t user_id) {
@@ -185,20 +159,6 @@ void SocialGraphHandler::FollowWithUsername(const std::string &user_name,
       id1 = ug.user_id;
     if (ug.username == followee_name)
       id2 = ug.user_id;
-  }
-
-  // Auto-create known hardcoded users if missing
-  if (id2 == -1) {
-    if (followee_name == "mark") {
-      id2 = 1001;
-      InsertUser(id2, followee_name);
-    } else if (followee_name == "elon") {
-      id2 = 1002;
-      InsertUser(id2, followee_name);
-    } else if (followee_name == "bill") {
-      id2 = 1003;
-      InsertUser(id2, followee_name);
-    }
   }
 
   if (id1 != -1 && id2 != -1)
