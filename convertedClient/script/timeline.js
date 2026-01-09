@@ -61,6 +61,12 @@ export default function showTimeline(type) {
 window.showTimeline = showTimeline;
 
 function initTimeline() {
+  if (!di.sessionStorageUserService.getLoggedUser()) {
+    console.log("User not logged in, redirecting to login page.");
+    window.location.href = "../index.html";
+    return;
+  }
+
   const allCards = document.getElementsByClassName("post-card");
   if (allCards.length > 0) {
     console.log("timeline.js: Template captured.");
@@ -78,6 +84,14 @@ function initTimeline() {
       showTimeline("main");
     });
   }
+
+  const logoutBtn = document.getElementById('logout-btn');
+  if (logoutBtn) {
+    logoutBtn.addEventListener('click', (e) => {
+      e.preventDefault();
+      logout();
+    });
+  }
 }
 
 if (document.readyState === "loading") {
@@ -85,3 +99,18 @@ if (document.readyState === "loading") {
 } else {
   initTimeline();
 }
+
+export function logout() {
+  try {
+    if (di.sessionStorageUserService && di.sessionStorageUserService.getLoggedUser != null) {
+      di.sessionStorageUserService.setLoggedUser(null);
+      localStorage.removeItem("username");
+    }
+  } catch (e) {
+    console.error("Error during logout:", e);
+    // Fallback if binding fails
+    localStorage.removeItem("username");
+  }
+  window.location.href = "../index.html";
+}
+window.logout = logout;
