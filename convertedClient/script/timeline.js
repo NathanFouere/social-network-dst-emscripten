@@ -77,7 +77,7 @@ export default function showTimeline(type) {
 window.showTimeline = showTimeline;
 
 function initTimeline() {
-  if (!di.sessionStorageUserService.getLoggedUser()) {
+  if (!sessionStorage.getItem("user") || !di.sessionStorageUserService.getLoggedUser()) {
     console.log("User not logged in, redirecting to login page.");
     window.location.href = "../index.html";
     return;
@@ -141,14 +141,13 @@ if (document.readyState === "loading") {
 
 export function logout() {
   try {
-    if (di.sessionStorageUserService && di.sessionStorageUserService.getLoggedUser != null) {
-      di.sessionStorageUserService.setLoggedUser(null);
-      localStorage.removeItem("username");
+    if (di.sessionStorageUserService) {
+      di.sessionStorageUserService.removeLoggedUser();
     }
   } catch (e) {
     console.error("Error during logout:", e);
     // Fallback if binding fails
-    localStorage.removeItem("username");
+    sessionStorage.removeItem("user");
   }
   window.location.href = "../index.html";
 }
