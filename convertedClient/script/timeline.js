@@ -23,10 +23,15 @@ export default function showTimeline(type) {
       posts.push(postsVector.get(i));
     }
 
-    // Sort by timestamp descending (newest first)
+    // Sort by timestamp based on toggle button
+    const sortBtn = document.getElementById('sort-toggle-btn');
+    const sortAsc = sortBtn ? sortBtn.getAttribute('data-sort') === 'asc' : false;
+
     posts.sort((a, b) => {
-      if (Number(a.timestamp) > Number(b.timestamp)) return -1;
-      if (Number(a.timestamp) < Number(b.timestamp)) return 1;
+      const valA = Number(a.timestamp);
+      const valB = Number(b.timestamp);
+      if (valA > valB) return sortAsc ? 1 : -1;
+      if (valA < valB) return sortAsc ? -1 : 1;
       return 0;
     });
 
@@ -92,6 +97,29 @@ function initTimeline() {
   const toggle = document.getElementById('only-friends-toggle');
   if (toggle) {
     toggle.addEventListener('change', () => {
+      showTimeline("main");
+    });
+  }
+
+  const sortBtn = document.getElementById('sort-toggle-btn');
+  if (sortBtn) {
+    sortBtn.addEventListener('click', () => {
+      const currentSort = sortBtn.getAttribute('data-sort');
+      const newSort = currentSort === 'desc' ? 'asc' : 'desc';
+      sortBtn.setAttribute('data-sort', newSort);
+
+      // Update UI
+      const icon = sortBtn.querySelector('i');
+      const label = document.getElementById('sort-label');
+
+      if (newSort === 'asc') {
+        icon.className = 'fas fa-arrow-up';
+        label.innerText = 'Oldest first';
+      } else {
+        icon.className = 'fas fa-arrow-down';
+        label.innerText = 'Newest first';
+      }
+
       showTimeline("main");
     });
   }
