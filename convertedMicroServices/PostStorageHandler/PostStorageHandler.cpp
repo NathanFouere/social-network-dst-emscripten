@@ -144,6 +144,7 @@ Post *PostStorageHandler::ReadPost(int64_t post_id) {
 }
 
 void PostStorageHandler::SetAllPosts(std::string posts_json) {
+  std::cout << "DEBUG: SetAllPosts received JSON: " << posts_json << std::endl;
   this->posts.clear();
   try {
     json postsJson = json::parse(posts_json);

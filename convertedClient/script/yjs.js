@@ -7,6 +7,13 @@ const docName = "test";
 // clients connected to the same room-name share document updates
 const provider = new WebrtcProvider("test-room", ydoc, {
   signaling: ["ws://10.144.199.199:4444"],
+  peerOpts: {
+    config: {
+      iceServers: [
+        { urls: ['stun:stun.l.google.com:19302', 'stun:global.stun.twilio.com:3478'] }
+      ]
+    }
+  }
 });
 provider.on("status", (event) => {
   console.log("webrtc status:", event);
