@@ -102,9 +102,8 @@ if (document.readyState === "loading") {
 
 export function logout() {
   try {
-    if (di.sessionStorageUserService && di.sessionStorageUserService.getLoggedUser() != null) {
-      di.sessionStorageUserService.setLoggedUser(null);
-      sessionStorage.removeItem("user");
+    if (di.sessionStorageUserService) {
+      di.sessionStorageUserService.removeLoggedUser();
     }
   } catch (e) {
     console.error("Error during logout:", e);
