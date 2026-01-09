@@ -16,13 +16,24 @@ export default function showTimeline(type) {
     const onlyFriends = onlyFriendsToggle ? onlyFriendsToggle.checked : false;
 
     // Fetch posts (synchronous for now based on current impl)
-    const posts = di.homeTimelineHandler.ReadHomeTimeline(loggedUser.userid, 0, 10, onlyFriends);
+    const postsVector = di.homeTimelineHandler.ReadHomeTimeline(loggedUser.userid, 0, 10, onlyFriends);
+
+    const posts = [];
+    for (let i = 0; i < postsVector.size(); i++) {
+      posts.push(postsVector.get(i));
+    }
+
+    // Sort by timestamp descending (newest first)
+    posts.sort((a, b) => {
+      if (Number(a.timestamp) > Number(b.timestamp)) return -1;
+      if (Number(a.timestamp) < Number(b.timestamp)) return 1;
+      return 0;
+    });
 
     // Clear current posts
     cardBlock.innerHTML = "";
 
-    for (var i = 0; i < posts.size(); i++) {
-      const p = posts.get(i);
+    for (const p of posts) {
       const date = new Date(Number(p.timestamp) * 1000);
 
       const clone = postTemplate.cloneNode(true);
