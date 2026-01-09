@@ -7,7 +7,8 @@ var module = await Module();
 module.ydoc = ydoc;
 
 // TODO => tout regrouper dans un promise.all
-const uniqueIdHandler = await new module.UniqueIdHandler("abc");
+const randomId = Math.random().toString(36).substring(7);
+const uniqueIdHandler = await new module.UniqueIdHandler(randomId);
 const mediaHandler = await new module.MediaHandler();
 const socialGraphHandler = await new module.SocialGraphHandler();
 const sessionStorageUserService = await new module.SessionStorageUserService();
@@ -17,6 +18,20 @@ const userHandler = await new module.UserHandler(
   sessionStorageUserService,
 );
 const postStorageHandler = await new module.PostStorageHandler();
+
+// Sync Yjs posts with C++ backend
+const postsYArray = ydoc.getArray("posts");
+postsYArray.observe(() => {
+  console.log("Yjs posts update detected, syncing to C++...");
+  try {
+    const allPosts = postsYArray.toJSON();
+    postStorageHandler.SetAllPosts(JSON.stringify(allPosts));
+    window.dispatchEvent(new CustomEvent("posts-updated"));
+  } catch (e) {
+    console.error("Error syncing Yjs posts to C++:", e);
+  }
+});
+
 const userMentionHandler = await new module.UserMentionHandler();
 const textHandler = await new module.TextHandler(userMentionHandler);
 const userTimelineHandler = await new module.UserTimelineHandler(

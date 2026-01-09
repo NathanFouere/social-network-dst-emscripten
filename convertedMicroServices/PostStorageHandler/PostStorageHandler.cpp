@@ -143,10 +143,31 @@ Post *PostStorageHandler::ReadPost(int64_t post_id) {
   return nullptr;
 }
 
+void PostStorageHandler::SetAllPosts(std::string posts_json) {
+  this->posts.clear();
+  try {
+    json postsJson = json::parse(posts_json);
+    for (json postJson : postsJson) {
+      try {
+        this->posts.push_back(Post::fromJson(postJson));
+      } catch (const std::exception &e) {
+        std::cout << "PostStorageHandler: Skipped invalid post: " << e.what()
+                  << std::endl;
+      }
+    }
+    std::cout << "PostStorageHandler: Synced " << this->posts.size()
+              << " posts from YJs Update." << std::endl;
+  } catch (const std::exception &e) {
+    std::cout << "PostStorageHandler: Error parsing posts JSON: " << e.what()
+              << std::endl;
+  }
+}
+
 EMSCRIPTEN_BINDINGS(post_storage_module) {
   class_<PostStorageHandler>("PostStorageHandler")
       .constructor<>()
       .function("StorePost", &PostStorageHandler::StorePost)
       .function("DeletePost", &PostStorageHandler::DeletePost)
-      .function("EditPostText", &PostStorageHandler::EditPostText);
+      .function("EditPostText", &PostStorageHandler::EditPostText)
+      .function("SetAllPosts", &PostStorageHandler::SetAllPosts);
 }

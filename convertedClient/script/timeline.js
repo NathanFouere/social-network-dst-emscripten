@@ -131,6 +131,11 @@ function initTimeline() {
       logout();
     });
   }
+
+  window.addEventListener("posts-updated", () => {
+    console.log("Timeline refreshing from Yjs update...");
+    showTimeline("main");
+  });
 }
 
 if (document.readyState === "loading") {
